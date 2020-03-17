@@ -3,7 +3,6 @@ export const ANILIST_BASE_URL = 'https://graphql.anilist.co'
 export const SEARCH_QUERY = `query ($search: String, $page: Int, $perPage: Int) {
     Page (page: $page, perPage: $perPage) {
         pageInfo {
-            hasNextPage
             total
             lastPage
         }
@@ -13,8 +12,13 @@ export const SEARCH_QUERY = `query ($search: String, $page: Int, $perPage: Int) 
                 full
             }
             favourites
-        		image	{
-              medium
+        		image {
+                    medium
+            }
+            characters {
+                pageInfo {
+                    total
+                }
             }
         }
     }
@@ -32,6 +36,12 @@ export const STAFF_QUERY = `query ($id : Int) {
         }
         description
         siteUrl
+        characters (perPage: 50) {
+            pageInfo {
+                total
+                lastPage
+            }
+        }
     }
 }`;
 
@@ -72,3 +82,5 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
         }
     }
 }`
+
+export const PLACEHOLDER_SEIYUUS = ['Kana Hanazawa', 'Sugita Tomokazu', 'Kamiya Hiroshi', 'Uchida Maaya'];

@@ -1,6 +1,5 @@
 import React from "react"
-import { Link } from "react-router-dom";
-import { Grid, Paper, Typography, Icon, List, ListItem, ListItemAvatar, ListItemText, Avatar, CircularProgress }
+import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress }
   from "@material-ui/core"
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
@@ -11,8 +10,11 @@ const styles = theme => ({
   root: {
     flexGrow: 1,
   },
-  mainPaper: {
+  descPaper: {
     padding: theme.spacing(2),
+  },
+  listPaper: {
+    padding: theme.spacing(1),
   },
   item: {
     padding: theme.spacing(0.5),
@@ -25,6 +27,19 @@ const styles = theme => ({
   },
   itemRight: {
     textAlign: 'right'
+  },
+  centerFlex: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  markdownContainer: {
+    fontSize: '0.875rem'
+  },
+  listLoader: {
+    display: 'flex',
+    justifyContent: 'center',
+    height: '100%',
+    alignItems: 'center',
   }
 });
 
@@ -34,6 +49,25 @@ const capitalizeWord = (word) => {
   return word;
 }
 
+const SeiyuuDescription = (props) => {
+  const classes = makeStyles(styles)();
+
+  return (
+    <>
+      <img src={props.image} width="100%" alt="Seiyuu"/>
+
+      <Typography variant="h4">{props.name}</Typography>
+
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Icon fontSize="small">favorite</Icon> &nbsp;
+        <Typography variant="body2">{props.favorites}</Typography>
+      </div>
+
+      <div className={classes.markdownContainer}>
+        <ReactMarkdown source={props.description} />
+      </div>
+    </>)
+}
 const CharacterItem = (props) => {
   const classes = makeStyles(styles)();
 
@@ -47,9 +81,9 @@ const CharacterItem = (props) => {
           <Grid item xs={10} className={classes.item}>
             <Typography variant="body1">{props.name}</Typography>
             <Typography variant="body2">{props.role}</Typography>
-            <div style={{ display: 'flex', alignItems: 'center'}}>
-              <Icon fontSize="inherit">favoriteBorder</Icon>
-              <Typography variant="body2">{props.favorites}</Typography>
+            <div className={classes.centerFlex}>
+              <Icon style={{fontSize: "0.875rem"}}>favoriteBorder</Icon> &nbsp;
+              <Typography variant="body2" style={{fontSize: "0.875rem"}}>{props.favorites}</Typography>
             </div>
           </Grid>
         </Grid>
@@ -90,12 +124,14 @@ class UnstyledSeiyuu extends React.Component {
       image: '',
       description: 'Loading...',
       anilistUrl: '#',
-      characters: []
-    }
+      characters: [],
+      is_loading_desc: true,
+    };
   }
 
-  async fetchList() {
-    const response = await fetch(ANILIST_BASE_URL , {
+  async fetchList(page) {
+    console.log(`Fetching page ${page}`);
+    const response = await fetch(ANILIST_BASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -105,15 +141,16 @@ class UnstyledSeiyuu extends React.Component {
         query: CHARACTERS_QUERY,
         variables: {
           id: parseInt(this.state.id),
-          page: 1,
-          perPage: 5
+          page: page,
+          perPage: 50
         }
       })
     });
     const reply = await response.json();
+    console.log(`Fetched page ${page}`);
     console.log(reply);
     const data = reply['data']['Staff']
-    console.assert(data['id'] == this.state.id);
+    console.assert(data['id'] === this.state.id);
     const characters = data['characters']['edges'].map(e => (
       {
         id: e['node']['id'],
@@ -127,11 +164,24 @@ class UnstyledSeiyuu extends React.Component {
         media_image: e['node']['media']['nodes'][0]['coverImage']['medium']
       }
     ));
+    return characters;
+  }
+
+  async fetchFullList(total_pages) {
+    console.log(`Fetching ${total_pages} pages`);
+    const promises = [];
+    for (let page = 1; page <= total_pages; ++page) {
+      promises.push(this.fetchList(page));
+    }
+    const character_lists = await Promise.all(promises);
+    const characters = [].concat.apply([], character_lists);
+
     this.setState({ characters });
     console.log(this.state);
   }
-  async componentDidMount() {
-    const promise = await fetch(ANILIST_BASE_URL , {
+
+  async fetchStaff() {
+    const response = await fetch(ANILIST_BASE_URL , {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,18 +194,25 @@ class UnstyledSeiyuu extends React.Component {
         }
       })
     });
-    const [response, _] = await Promise.all([promise, this.fetchList()]);
     const reply = await response.json();
     console.log(reply);
-    const data = reply['data']['Staff']
+    const data = reply['data']['Staff'];
     this.setState({
       id: data['id'],
       name: data['name']['full'],
       favorites: data['favourites'],
       image: data['image']['large'],
       description: data['description'],
-      anilistUrl: data['siteUrl']
-    })
+      anilistUrl: data['siteUrl'],
+      is_loading_desc: false,
+    });
+    
+    let total_pages = data['characters']['pageInfo']['lastPage'];
+    await this.fetchFullList(total_pages);
+  }
+
+  componentDidMount() {
+    this.fetchStaff()
   }
 
   render() {
@@ -164,23 +221,16 @@ class UnstyledSeiyuu extends React.Component {
       <div className={classes.root}>
         <Grid container spacing={2}>
           <Grid item md={3}>
-            <Paper className={classes.mainPaper}>
-              <img src={this.state.image} width="100%" alt="Seiyuu"/>
-
-              <Typography variant="h4">{this.state.name}</Typography>
-
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Icon fontSize="small">favoriteBorder</Icon> &nbsp;
-                <Typography variant="body2">{this.state.favorites}</Typography>
-              </div>
-
-              <ReactMarkdown source={this.state.description} />
-            </Paper>
+            {this.state.is_loading_desc ||
+              <Paper className={classes.descPaper}>
+                <SeiyuuDescription image={this.state.image} name={this.state.name}
+                  favorites={this.state.favorites} description={this.state.description}/>
+              </Paper>}
           </Grid>
           <Grid item md={9}>
-            <Paper className={classes.mainPaper}>
-              {this.state.characters.length > 0 ? <CharacterList data={this.state.characters} /> : <CircularProgress />}
-            </Paper>
+              {this.state.characters.length > 0 ?
+                <Paper className={classes.listPaper}><CharacterList data={this.state.characters} /></Paper> :
+              <div className={classes.listLoader}><CircularProgress size={60} thickness={4}/></div>}
           </Grid>
         </Grid>
       </div>

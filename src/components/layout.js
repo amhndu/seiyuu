@@ -24,16 +24,24 @@ const Layout = ({ children }) => {
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       </Helmet>
-      <Header siteTitle={data.site.siteMetadata.title} />
-      <div
-        style={{
-          margin: `0 auto`,
-          padding: `0 1.0875rem 1.45rem`,
+      <div style={{
+          display: 'flex',
+          flexDirection:'column',
+          minHeight: '100vh',
         }}
       >
-        <main>{children}</main>
-        <footer>
-          Footer Here
+        <Header siteTitle={data.site.siteMetadata.title} />
+        <main style={{ margin: '1em', }}>
+          {children}
+        </main>
+        <footer style={{
+          padding: '1em 0.5em',
+          marginTop: 'auto',
+          background: 'rebeccapurple',
+          textAlign: 'center',
+          color: 'white'
+        }}>
+          All anime/seiyuu data provided by anilist.
         </footer>
       </div>
     </>
