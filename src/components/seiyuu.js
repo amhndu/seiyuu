@@ -1,5 +1,6 @@
 import React from "react"
-import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress }
+import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
+  Button, Menu, MenuItem, Grow }
   from "@material-ui/core"
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
@@ -114,6 +115,64 @@ const CharacterList = (props) => {
   );
 }
 
+const sortKeys = {
+  'name': 'Character Name',
+  'favorites': 'Character Favorites',
+  'media_title': 'Anime Name',
+  'media_score': 'Anime Score',
+  'media_year': 'Anime Release Year',
+};
+const sortOrders = {
+  'asc': 'Ascending',
+  'desc': 'Descending',
+};
+
+const SortMenu = (props) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClick = (event, key) => {
+    setAnchorEl(null);
+    props.onChange(key);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <>
+      <Button
+        aria-controls="sort-by"
+        aria-haspopup="true"
+        onClick={handleOpen}
+        endIcon={<Icon>expand_more</Icon>}
+        style={{textTransform: 'none'}}
+      >
+        {props.keys[props.selectedKey]}
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+      >
+        {Object.entries(props.keys).map(([key, text]) =>
+          <MenuItem
+            key={key}
+            selected={key === props.selectedKey}
+            onClick={event => handleClick(event, key)}>
+              {text}
+          </MenuItem>
+        )}
+      </Menu>
+    </>
+  );
+}
+
 class UnstyledSeiyuu extends React.Component {
   constructor(props) {
     super(props)
@@ -125,7 +184,9 @@ class UnstyledSeiyuu extends React.Component {
       description: 'Loading...',
       anilistUrl: '#',
       characters: [],
-      is_loading_desc: true,
+      is_loading: true,
+      sort_key: Object.keys(sortKeys)[0],
+      sort_order: Object.keys(sortOrders)[0],
     };
   }
 
@@ -174,9 +235,14 @@ class UnstyledSeiyuu extends React.Component {
       promises.push(this.fetchList(page));
     }
     const character_lists = await Promise.all(promises);
-    const characters = [].concat.apply([], character_lists);
+    const characters = this.sortCharacters(this.state.sort_key, this.state.sort_order,
+                                            [].concat.apply([], character_lists));
 
-    this.setState({ characters });
+    this.setState({
+      characters: characters,
+      is_loading: false,
+    });
+
     console.log(this.state);
   }
 
@@ -204,7 +270,6 @@ class UnstyledSeiyuu extends React.Component {
       image: data['image']['large'],
       description: data['description'],
       anilistUrl: data['siteUrl'],
-      is_loading_desc: false,
     });
     
     let total_pages = data['characters']['pageInfo']['lastPage'];
@@ -215,24 +280,77 @@ class UnstyledSeiyuu extends React.Component {
     this.fetchStaff()
   }
 
+  sortCharacters(sort_key, order, characters) {
+    const order_int = (order === 'asc') ? 1 : -1;
+    console.log("Start sorting");
+    characters.sort((a, b) => {
+      let a_key = a[sort_key];
+      let b_key = b[sort_key];
+      if (a_key < b_key) {
+        return -order_int;
+      }
+      if (a_key > b_key) {
+        return +order_int;
+      }
+      return 0;
+    });
+    console.log("End sorting")
+    return characters;
+  }
+
+  changeOrder(sort_order) {
+    if (sort_order in sortOrders) {
+      console.log(`Set order ${sort_order}`);
+
+      const characters = this.sortCharacters(this.state.sort_key, sort_order, this.state.characters);
+      this.setState({
+        sort_order,
+        characters
+      })
+    } else {
+      console.error(`changeOrder: ${sort_order} not in sortOrders`);
+    }
+  }
+  changeKey(sort_key) {
+    if (sort_key in sortKeys) {
+      console.log(`Set sort_key ${sort_key}`);
+
+      const characters = this.sortCharacters(sort_key, this.state.sort_order, this.state.characters);
+      this.setState({
+          sort_key,
+          characters,
+      });
+    } else {
+      console.error(`changeKey: ${sort_key} not in sortKeys`);
+    }
+  }
+
   render() {
     const classes = this.props.classes;
+    const PageGrid = () => <Grid container spacing={2}>
+      <Grid item md={3}>
+        <Paper className={classes.descPaper}>
+          <SeiyuuDescription image={this.state.image} name={this.state.name}
+            favorites={this.state.favorites} description={this.state.description} />
+        </Paper>
+      </Grid>
+      <Grid item md={9}>
+        <Paper className={classes.listPaper}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <Typography variant="body2" component="span">Sort by: </Typography>
+            <SortMenu onChange={key => this.changeKey(key)} selectedKey={this.state.sort_key} keys={sortKeys} />
+            <SortMenu onChange={order => this.changeOrder(order)} selectedKey={this.state.sort_order} keys={sortOrders} />
+          </div>
+          <CharacterList data={this.state.characters} />
+        </Paper>
+      </Grid>
+    </Grid>;
+
     return (
       <div className={classes.root}>
-        <Grid container spacing={2}>
-          <Grid item md={3}>
-            {this.state.is_loading_desc ||
-              <Paper className={classes.descPaper}>
-                <SeiyuuDescription image={this.state.image} name={this.state.name}
-                  favorites={this.state.favorites} description={this.state.description}/>
-              </Paper>}
-          </Grid>
-          <Grid item md={9}>
-              {this.state.characters.length > 0 ?
-                <Paper className={classes.listPaper}><CharacterList data={this.state.characters} /></Paper> :
-              <div className={classes.listLoader}><CircularProgress size={60} thickness={4}/></div>}
-          </Grid>
-        </Grid>
+        {this.state.is_loading ?
+          <div className={classes.listLoader}><CircularProgress size={60} thickness={4} /></div> :
+          <PageGrid />}
       </div>
     )
   }
