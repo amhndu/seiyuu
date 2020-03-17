@@ -1,6 +1,5 @@
 import React from "react"
 import PropTypes from "prop-types"
-import { useStaticQuery, graphql } from "gatsby"
 import { Helmet } from "react-helmet"
 import { HashRouter as Router } from "react-router-dom"
 
@@ -8,20 +7,10 @@ import Header from "./header"
 import "./layout.css"
 
 const Layout = ({ children }) => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          title
-        }
-      }
-    }
-  `)
-
   return (
     <>
       <Helmet>
-        <title>{data.site.siteMetadata.title}</title>
+        <title>Seiyuu App</title>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       </Helmet>
@@ -32,7 +21,7 @@ const Layout = ({ children }) => {
             minHeight: '100vh',
           }}
         >
-          <Header siteTitle={data.site.siteMetadata.title} />
+          <Header siteTitle="Seiyuu" />
           <main style={{ margin: '1em', }}>
             {children}
           </main>
