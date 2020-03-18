@@ -75,6 +75,16 @@ const styles = theme => ({
       height: '100%',
     },
   },
+  link: {
+    textDecoration: 'none',
+    color: 'blue',
+    '&:link': {
+      color: 'blue'
+    },
+    '&:visited': {
+      color: 'blue'
+    },
+  }
 });
 
 const capitalizeWord = (word) => {
@@ -102,7 +112,7 @@ const SeiyuuDescription = (props) => {
     <>
       <div style={{textAlign: 'center'}}><img src={props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
 
-      <Typography variant="h4"><a href={props.url}>{props.name}</a></Typography>
+      <Typography variant="h4"><a className={classes.link} href={props.url}>{props.name}</a></Typography>
 
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Icon fontSize="small">favorite</Icon> &nbsp;
@@ -131,7 +141,7 @@ class UnstyledCharacterItem extends React.PureComponent {
                 <img src={role.image} alt="character" className={classes.itemImage}/>
               </Grid>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1"><a href={role.url}>{role.name}</a></Typography>
+                <Typography variant="body1"><a className={classes.link} href={role.url}>{role.name}</a></Typography>
                 <Typography variant="body2">{role.role}</Typography>
                 <div className={classes.centerFlex}>
                   <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
@@ -141,15 +151,11 @@ class UnstyledCharacterItem extends React.PureComponent {
             </Grid>
             <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1"><a href={role.media_url}>{role.media_title}</a></Typography>
+                <Typography variant="body1" style={{textOverflow: 'ellipsis'}}><a className={classes.link} href={role.media_url}>{role.media_title}</a></Typography>
                 <Typography variant="body2">{role.media_season}</Typography>
                 <Typography variant="body2">
                   <b>Score</b>: {role.media_score} &nbsp; <b>Popularity</b>: {role.media_popularity}
                 </Typography>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
-                  <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
-                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{role.media_favorites}</Typography>
-                </div>
               </Grid>
               <Grid item xs={2} className={classes.item}>
                 <img src={role.media_image} alt="media" className={classes.itemImage}/>
@@ -166,7 +172,8 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 
 const CharacterList = (props) => {
   const theme = useTheme();
-  const itemSize = useMediaQuery(theme.breakpoints.up('sm')) ? 120 : 240
+  const itemSize = useMediaQuery(theme.breakpoints.up('sm')) ? 120 : 240;
+  console.log('itemSize', itemSize);
 
   return (
       <AutoSizer>
@@ -191,7 +198,6 @@ const sortKeys = {
   'media_title': 'Anime Name',
   'media_score': 'Anime Score',
   'media_season_int': 'Anime Release Season',
-  'media_favorites': 'Anime Favorites',
   'media_popularity': 'Anime Popularity',
 };
 const sortOrders = {
@@ -300,7 +306,6 @@ class UnstyledSeiyuu extends React.Component {
             media_season: joinSeason(m['season'], m['seasonYear']),
             media_season_int: m['seasonInt'] || 0,
             media_image: m['coverImage']['medium'],
-            media_favorites: m['favourites'] || 0,
             media_popularity: m['popularity'] || 0,
             media_url: m['siteUrl'],
           });

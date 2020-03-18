@@ -78,7 +78,6 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                             coverImage {
                                 medium
                             }
-                            favourites
                             season
                             seasonInt
                             popularity
