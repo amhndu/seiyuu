@@ -57,6 +57,7 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
             edges {
                 role
                 node {
+                    siteUrl
                     id
                     favourites
                     image {
@@ -67,6 +68,7 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                     }
                     media {
                         nodes {
+                            siteUrl
                             type
                             averageScore
                             title {

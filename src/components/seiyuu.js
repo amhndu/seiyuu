@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import { FixedSizeList as VirtualizedList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { Helmet } from "react-helmet"
+import { Link } from "react-router-dom"
 
 import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY, APP_NAME } from "../common";
 import { ErrorSnackbar } from "../components/messageSnackbar"
@@ -73,7 +74,7 @@ const styles = theme => ({
     [theme.breakpoints.down('sm')]: {
       height: '100%',
     },
-  }
+  },
 });
 
 const capitalizeWord = (word) => {
@@ -101,7 +102,7 @@ const SeiyuuDescription = (props) => {
     <>
       <div style={{textAlign: 'center'}}><img src={props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
 
-      <Typography variant="h4">{props.name}</Typography>
+      <Typography variant="h4"><a href={props.url}>{props.name}</a></Typography>
 
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Icon fontSize="small">favorite</Icon> &nbsp;
@@ -114,6 +115,7 @@ const SeiyuuDescription = (props) => {
     </>)
 }
 
+// PureComponent helps with (scrolling) performance
 class UnstyledCharacterItem extends React.PureComponent {
   render() {
     const {index, style, data} = this.props;
@@ -129,7 +131,7 @@ class UnstyledCharacterItem extends React.PureComponent {
                 <img src={role.image} alt="character" className={classes.itemImage}/>
               </Grid>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">{role.name}</Typography>
+                <Typography variant="body1"><a href={role.url}>{role.name}</a></Typography>
                 <Typography variant="body2">{role.role}</Typography>
                 <div className={classes.centerFlex}>
                   <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
@@ -139,7 +141,7 @@ class UnstyledCharacterItem extends React.PureComponent {
             </Grid>
             <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">{role.media_title}</Typography>
+                <Typography variant="body1"><a href={role.media_url}>{role.media_title}</a></Typography>
                 <Typography variant="body2">{role.media_season}</Typography>
                 <Typography variant="body2">
                   <b>Score</b>: {role.media_score} &nbsp; <b>Popularity</b>: {role.media_popularity}
@@ -292,6 +294,7 @@ class UnstyledSeiyuu extends React.Component {
             favorites: e['node']['favourites'] || 0,
             image: e['node']['image']['medium'],
             name: e['node']['name']['full'],
+            url: e['node']['siteUrl'],
             media_score: toFixedNumber((m['averageScore'] || 0) / 10),
             media_title: m['title']['romaji'],
             media_season: joinSeason(m['season'], m['seasonYear']),
@@ -299,6 +302,7 @@ class UnstyledSeiyuu extends React.Component {
             media_image: m['coverImage']['medium'],
             media_favorites: m['favourites'] || 0,
             media_popularity: m['popularity'] || 0,
+            media_url: m['siteUrl'],
           });
         }
       })
@@ -413,8 +417,12 @@ class UnstyledSeiyuu extends React.Component {
     const PageGrid = () => <Grid container spacing={2}>
       <Grid item xs sm={3}>
         <Paper className={classes.descPaper}>
-          <SeiyuuDescription image={this.state.image} name={this.state.name}
-            favorites={this.state.favorites} description={this.state.description} />
+          <SeiyuuDescription
+            image={this.state.image}
+            name={this.state.name}
+            favorites={this.state.favorites}
+            url={this.state.anilistUrl}
+            description={this.state.description} />
         </Paper>
       </Grid>
       <Grid item xs sm={9}>
