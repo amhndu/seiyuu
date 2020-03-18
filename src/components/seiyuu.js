@@ -403,13 +403,13 @@ class UnstyledSeiyuu extends React.Component {
   render() {
     const classes = this.props.classes;
     const PageGrid = () => <Grid container spacing={2}>
-      <Grid item sm={3}>
+      <Grid item xs sm={3}>
         <Paper className={classes.descPaper}>
           <SeiyuuDescription image={this.state.image} name={this.state.name}
             favorites={this.state.favorites} description={this.state.description} />
         </Paper>
       </Grid>
-      <Grid item sm={9}>
+      <Grid item xs sm={9}>
         <Paper className={classes.listPaper}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <Typography variant="body2" component="span">Sort by: </Typography>

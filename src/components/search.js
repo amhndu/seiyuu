@@ -20,12 +20,22 @@ const styles = theme => ({
     alignItems: 'center'
   },
   searchForm: {
-    width: '60%',
+    [theme.breakpoints.up('sm')]: {
+      width: '60%',
+    },
+    [theme.breakpoints.down('sm')]: {
+      width: '90%',
+    },
     margin: '0 auto'
   },
   resultsPaper: {
+    [theme.breakpoints.up('sm')]: {
+      width: '80%',
+    },
+    [theme.breakpoints.down('sm')]: {
+      width: '90%',
+    },
     marginTop: '2em',
-    maxWidth: '80%',
     marginLeft: 'auto',
     marginRight: 'auto',
   }
