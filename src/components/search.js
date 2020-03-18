@@ -7,8 +7,9 @@ import {
 }
   from "@material-ui/core"
 import { withStyles, makeStyles } from '@material-ui/core/styles';
+import { Helmet } from "react-helmet"
 
-import { ANILIST_BASE_URL, SEARCH_QUERY, PLACEHOLDER_SEIYUUS } from "../common";
+import { ANILIST_BASE_URL, SEARCH_QUERY, PLACEHOLDER_SEIYUUS, APP_NAME } from "../common";
 import { ErrorSnackbar } from "../components/messageSnackbar"
 
 const styles = theme => ({
@@ -220,6 +221,9 @@ class UnstyledSearch extends React.Component {
     const classes = this.props.classes;
     return (
       <div>
+        <Helmet>
+          <title>{this.state.has_results ? `Searching for ${this.state.query_text} - ${APP_NAME}` : `${APP_NAME}`}</title>
+        </Helmet>
         <ErrorSnackbar
           open={this.state.snackbar_open}
           message={this.state.snackbar_message}

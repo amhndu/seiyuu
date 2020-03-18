@@ -6,8 +6,9 @@ import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
 import { FixedSizeList as VirtualizedList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
+import { Helmet } from "react-helmet"
 
-import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY } from "../common";
+import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY, APP_NAME } from "../common";
 import { ErrorSnackbar } from "../components/messageSnackbar"
 
 const styles = theme => ({
@@ -58,9 +59,11 @@ const styles = theme => ({
   listItem: {
     [theme.breakpoints.up('sm')]: {
       height: 120,
+      maxHeight: 120,
     },
     [theme.breakpoints.down('sm')]: {
       height: 120*2,
+      maxHeight: 120*2
     },
   },
   listContainer: {
@@ -423,6 +426,9 @@ class UnstyledSeiyuu extends React.Component {
 
     return (
       <div className={classes.root}>
+        <Helmet>
+          <title>{!this.state.is_loading ? `${this.state.name} - ${APP_NAME}` : `${APP_NAME}`}</title>
+        </Helmet>
         <ErrorSnackbar
           open={this.state.snackbar_open}
           message={this.state.snackbar_message}
