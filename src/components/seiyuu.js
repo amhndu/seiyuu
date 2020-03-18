@@ -96,7 +96,7 @@ const SeiyuuDescription = (props) => {
 
   return (
     <>
-      <img src={props.image} width="100%" alt="Seiyuu"/>
+      <div style={{textAlign: 'center'}}><img src={props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
 
       <Typography variant="h4">{props.name}</Typography>
 
