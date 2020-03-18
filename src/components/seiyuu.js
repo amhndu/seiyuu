@@ -1,14 +1,14 @@
 import React from "react"
 import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
-  Button, Menu, MenuItem, Grow }
+  Button, Menu, MenuItem, Grow, useMediaQuery }
   from "@material-ui/core"
 import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
 import { FixedSizeList as VirtualizedList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { withWidth } from "@material-ui/core"
 
 import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY } from "../common";
+import { ErrorSnackbar } from "../components/messageSnackbar"
 
 const styles = theme => ({
   root: {
@@ -19,12 +19,12 @@ const styles = theme => ({
   },
   listPaper: {
     padding: theme.spacing(1),
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('sm')]: {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
     },
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('sm')]: {
       height: '100vh',
       display: 'block',
       overflowX: 'hidden',
@@ -56,18 +56,18 @@ const styles = theme => ({
     alignItems: 'center',
   },
   listItem: {
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('sm')]: {
       height: 120,
     },
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('sm')]: {
       height: 120*2,
     },
   },
   listContainer: {
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('sm')]: {
       flex: '1 1 auto',
     },
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('sm')]: {
       height: '100%',
     },
   }
@@ -99,62 +99,51 @@ const SeiyuuDescription = (props) => {
     </>)
 }
 
-const CharacterItem = (props) => {
-  const classes = makeStyles(styles)();
+class UnstyledCharacterItem extends React.PureComponent {
+  render() {
+    const {index, style, data} = this.props;
+    const staff = data[index];
+    const classes = this.props.classes;
 
-  return (
-    <ListItem divider={props.divider} className={classes.listItem}>
-      <Grid container>
-        <Grid container item md={6} justify="flex-start" className={classes.item}>
-          <Grid item xs={2} className={classes.item}>
-            <img src={props.image} alt="character" className={classes.itemImage}/>
+    return (
+      <div style={style}>
+        <ListItem divider={index < data.length - 1} className={classes.listItem}>
+          <Grid container>
+            <Grid container item sm={6} justify="flex-start" className={classes.item}>
+              <Grid item xs={2} className={classes.item}>
+                <img src={staff.image} alt="character" className={classes.itemImage}/>
+              </Grid>
+              <Grid item xs={10} className={classes.item}>
+                <Typography variant="body1">{staff.name}</Typography>
+                <Typography variant="body2">{staff.role}</Typography>
+                <div className={classes.centerFlex}>
+                  <Icon style={{fontSize: "0.875rem"}}>favoriteBorder</Icon> &nbsp;
+                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{staff.favorites}</Typography>
+                </div>
+              </Grid>
+            </Grid>
+            <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
+              <Grid item xs={10} className={classes.item}>
+                <Typography variant="body1">{staff.media_title}</Typography>
+                <Typography variant="body2">{staff.media_year}</Typography>
+                <Typography variant="body2">Score: {staff.media_score}</Typography>
+              </Grid>
+              <Grid item xs={2} className={classes.item}>
+                <img src={staff.media_image} alt="media" className={classes.itemImage}/>
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item xs={10} className={classes.item}>
-            <Typography variant="body1">{props.name}</Typography>
-            <Typography variant="body2">{props.role}</Typography>
-            <div className={classes.centerFlex}>
-              <Icon style={{fontSize: "0.875rem"}}>favoriteBorder</Icon> &nbsp;
-              <Typography variant="body2" style={{fontSize: "0.875rem"}}>{props.favorites}</Typography>
-            </div>
-          </Grid>
-        </Grid>
-        <Grid container item md={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
-          <Grid item xs={10} className={classes.item}>
-            <Typography variant="body1">{props.mediaTitle}</Typography>
-            <Typography variant="body2">{props.mediaYear}</Typography>
-            <Typography variant="body2">Score: {props.mediaScore}</Typography>
-          </Grid>
-          <Grid item xs={2} className={classes.item}>
-            <img src={props.mediaImage} alt="media" className={classes.itemImage}/>
-          </Grid>
-        </Grid>
-      </Grid>
-    </ListItem>
-  )
+        </ListItem>
+      </div>
+    );
+  }
 }
 
-const Row = ({ index, style, data }) => {
-  const c = data[index];
-  return (
-    <div style={style}>
-      <CharacterItem
-        key={c.id}
-        role={c.role}
-        image={c.image}
-        name={c.name}
-        favorites={c.favorites}
-        mediaTitle={c.media_title}
-        mediaScore={c.media_score}
-        mediaYear={c.media_year}
-        mediaImage={c.media_image}
-        divider={index < data.length - 1} />
-    </div>
-  );
-}
+const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 
-const CharacterList = withWidth()((props) => {
+const CharacterList = (props) => {
   const theme = useTheme();
-  const itemSize = props.width > theme.breakpoints.width('md') ? 120 : 240;
+  const itemSize = useMediaQuery(theme.breakpoints.up('sm')) ? 120 : 240
 
   return (
       <AutoSizer>
@@ -162,16 +151,16 @@ const CharacterList = withWidth()((props) => {
           <VirtualizedList
             height={height}
             itemCount={props.data.length}
-            itemSize={240}
+            itemSize={itemSize}
             width={width}
             itemData={props.data}
           >
-            {Row}
+            {CharacterItem}
           </VirtualizedList>
         )}
       </AutoSizer>
   );
-});
+};
 
 const sortKeys = {
   'name': 'Character Name',
@@ -245,11 +234,13 @@ class UnstyledSeiyuu extends React.Component {
       is_loading: true,
       sort_key: Object.keys(sortKeys)[0],
       sort_order: Object.keys(sortOrders)[0],
+
+      snackbar_open: false,
+      snackbar_message: '',
     };
   }
 
   async fetchList(page) {
-    console.log(`Fetching page ${page}`);
     const response = await fetch(ANILIST_BASE_URL, {
       method: 'POST',
       headers: {
@@ -266,8 +257,6 @@ class UnstyledSeiyuu extends React.Component {
       })
     });
     const reply = await response.json();
-    console.log(`Fetched page ${page}`);
-    console.log(reply);
     const data = reply['data']['Staff']
     console.assert(data['id'] === this.state.id);
     const characters = data['characters']['edges'].map(e => (
@@ -287,7 +276,6 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   async fetchFullList(total_pages) {
-    console.log(`Fetching ${total_pages} pages`);
     const promises = [];
     for (let page = 1; page <= total_pages; ++page) {
       promises.push(this.fetchList(page));
@@ -301,7 +289,6 @@ class UnstyledSeiyuu extends React.Component {
       is_loading: false,
     });
 
-    console.log(this.state);
   }
 
   async fetchStaff() {
@@ -369,6 +356,7 @@ class UnstyledSeiyuu extends React.Component {
       console.error(`changeOrder: ${sort_order} not in sortOrders`);
     }
   }
+
   changeKey(sort_key) {
     if (sort_key in sortKeys) {
       console.log(`Set sort_key ${sort_key}`);
@@ -383,16 +371,19 @@ class UnstyledSeiyuu extends React.Component {
     }
   }
 
+  setSnackbar(snackbar_open) {
+    this.setState({ snackbar_open });
+  }
   render() {
     const classes = this.props.classes;
     const PageGrid = () => <Grid container spacing={2}>
-      <Grid item md={3}>
+      <Grid item sm={3}>
         <Paper className={classes.descPaper}>
           <SeiyuuDescription image={this.state.image} name={this.state.name}
             favorites={this.state.favorites} description={this.state.description} />
         </Paper>
       </Grid>
-      <Grid item md={9}>
+      <Grid item sm={9}>
         <Paper className={classes.listPaper}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <Typography variant="body2" component="span">Sort by: </Typography>
@@ -406,6 +397,11 @@ class UnstyledSeiyuu extends React.Component {
 
     return (
       <div className={classes.root}>
+        <ErrorSnackbar
+          open={this.state.snackbar_open}
+          message={this.state.snackbar_message}
+          setOpen={open => this.setSnackbar(open)}
+        />
         {this.state.is_loading ?
           <div className={classes.listLoader}><CircularProgress size={60} thickness={4} /></div> :
           <PageGrid />}

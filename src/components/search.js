@@ -9,6 +9,7 @@ import {
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 
 import { ANILIST_BASE_URL, SEARCH_QUERY, PLACEHOLDER_SEIYUUS } from "../common";
+import { ErrorSnackbar } from "../components/messageSnackbar"
 
 const styles = theme => ({
   inline: {
@@ -43,16 +44,17 @@ const SearchResultItem = (props) => {
         <ListItemText
           disableTypography={true}
           primary={
-            <Typography variant="body1">{props.name}</Typography>
-          }
-          secondary={
             <>
-              <Typography variant="body2" style={{fontSize: "0.875rem"}}>Roles: {props.characters}</Typography>
-              <div className={classes.centerFlex}>
+              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
+                  <Typography variant="body1">{props.name}</Typography>
+                  
                   <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
                   <Typography variant="body2" style={{fontSize: "0.875rem"}}>{props.favorites}</Typography>
               </div>
             </>
+          }
+          secondary={
+              <Typography variant="body2" style={{fontSize: "0.875rem"}}>Roles: {props.characters}</Typography>
           }
         />
       </ListItem>
@@ -83,6 +85,9 @@ class UnstyledSearch extends React.Component {
       seiyuu_results: [],
       is_loading: false,
       has_results: false,
+
+      snackbar_open: false,
+      snackbar_message: '',
     };
     this.search_data = [];
     this.next_page = 1;
@@ -90,7 +95,6 @@ class UnstyledSearch extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log("componentDidUpdate");
     if (this.props.location !== prevProps.location) {
       this.updateIfQuery();
     }
@@ -102,12 +106,21 @@ class UnstyledSearch extends React.Component {
 
   updateIfQuery() {
       const query = this.props.match.params.query;
-      console.log(query);
       if (query) {
         this.search_data = [];
         this.next_page = 1;
         this.last_page = Number.MAX_SAFE_INTEGER;
-        this.setState({ query_text: query }, () => this.fetchResults(true));
+        this.setState({ query_text: query }, () => {
+          try {
+            this.fetchResults(true)
+          } catch(error) {
+            console.error("fetch failed", error);
+            this.setState({
+              snackbar_open: true,
+              snackbar_message: "Fetching search results failed. Please try again or report.",
+            });
+          }
+        });
       }
   }
 
@@ -115,9 +128,13 @@ class UnstyledSearch extends React.Component {
     return this.search_data.length > 0 || this.next_page <= this.last_page;
   }
 
+  setSnackbar(snackbar_open) {
+    this.setState({ snackbar_open });
+  }
+
   async fetchResults(new_search) {
     if (!this.hasNextPage()) {
-      console.log('called fetch_results while hasNextPage is false');
+      console.error('called fetch_results while hasNextPage is false');
       return;
     }
 
@@ -130,7 +147,6 @@ class UnstyledSearch extends React.Component {
 
     for (let i = 0; !done && i < 10; ++i) {
       if (this.search_data.length < RESULTS_PER_PAGE && this.next_page <= this.last_page) {
-        console.log("Fetching", this.next_page, this.last_page, this.search_data);
         const response = await fetch(ANILIST_BASE_URL , {
           method: 'POST',
           headers: {
@@ -147,7 +163,6 @@ class UnstyledSearch extends React.Component {
           })
         });
         const reply = await response.json();
-        console.log(reply)
         ++this.next_page;
 
         this.last_page = reply['data']['Page']['pageInfo']['lastPage'];
@@ -158,11 +173,9 @@ class UnstyledSearch extends React.Component {
           name: staff['name']['full'],
           characters: staff['characters']['pageInfo']['total'],
         }));
-        console.log(transformed.filter(staff => staff.characters > 0));
         this.search_data = this.search_data.concat(transformed.filter(staff => staff.characters > 0));
       }
 
-      console.log(this.search_data.length >= RESULTS_PER_PAGE, this.next_page > this.last_page);
       if (this.search_data.length >= RESULTS_PER_PAGE || this.next_page > this.last_page) {
         done = true;
       }
@@ -174,25 +187,35 @@ class UnstyledSearch extends React.Component {
       is_loading: false,
       has_results: true,
     });
-    console.log('done', this.state);
   }
 
   handleSubmit() {
-    console.log("Searching");
     if (this.state.query_text) {
       this.props.history.push(`/search/${this.state.query_text}`);
     }
   }
 
   more() {
-    console.log("More");
-    this.fetchResults(false);
+    try {
+      this.fetchResults(false)
+    } catch (error) {
+      console.error("fetch failed", error);
+      this.setState({
+        snackbar_open: true,
+        snackbar_message: "Fetching more search results failed. Please report this.",
+      });
+    }
   }
 
   render() {
     const classes = this.props.classes;
     return (
       <div>
+        <ErrorSnackbar
+          open={this.state.snackbar_open}
+          message={this.state.snackbar_message}
+          setOpen={open => this.setSnackbar(open)}
+        />
         <div>
           <form onSubmit={() => this.handleSubmit()} className={classes.searchForm}>
             <TextField

@@ -6,6 +6,7 @@
   "author": "Amish K. Naidu <amhndu@gmail.com>",
   "dependencies": {
     "@material-ui/core": "^4.9.5",
+    "@material-ui/lab": "^4.0.0-alpha.46",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-helmet": "^5.2.1",
