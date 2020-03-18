@@ -74,9 +74,21 @@ const styles = theme => ({
 });
 
 const capitalizeWord = (word) => {
+  if (!word)
+    return '';
   if (word.length)
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
   return word;
+}
+
+const toFixedNumber = (n) => Number.parseFloat(n).toFixed(2)
+
+const joinSeason = (season, year) => {
+  if (!season || !year) {
+    return 'Unknown';
+  }
+
+  return capitalizeWord(season) + ' ' + year;
 }
 
 const SeiyuuDescription = (props) => {
@@ -102,7 +114,7 @@ const SeiyuuDescription = (props) => {
 class UnstyledCharacterItem extends React.PureComponent {
   render() {
     const {index, style, data} = this.props;
-    const staff = data[index];
+    const role = data[index];
     const classes = this.props.classes;
 
     return (
@@ -111,25 +123,31 @@ class UnstyledCharacterItem extends React.PureComponent {
           <Grid container>
             <Grid container item sm={6} justify="flex-start" className={classes.item}>
               <Grid item xs={2} className={classes.item}>
-                <img src={staff.image} alt="character" className={classes.itemImage}/>
+                <img src={role.image} alt="character" className={classes.itemImage}/>
               </Grid>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">{staff.name}</Typography>
-                <Typography variant="body2">{staff.role}</Typography>
+                <Typography variant="body1">{role.name}</Typography>
+                <Typography variant="body2">{role.role}</Typography>
                 <div className={classes.centerFlex}>
-                  <Icon style={{fontSize: "0.875rem"}}>favoriteBorder</Icon> &nbsp;
-                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{staff.favorites}</Typography>
+                  <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
+                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{role.favorites}</Typography>
                 </div>
               </Grid>
             </Grid>
             <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">{staff.media_title}</Typography>
-                <Typography variant="body2">{staff.media_year}</Typography>
-                <Typography variant="body2">Score: {staff.media_score}</Typography>
+                <Typography variant="body1">{role.media_title}</Typography>
+                <Typography variant="body2">{role.media_season}</Typography>
+                <Typography variant="body2">
+                  <b>Score</b>: {role.media_score} &nbsp; <b>Popularity</b>: {role.media_popularity}
+                </Typography>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
+                  <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
+                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{role.media_favorites}</Typography>
+                </div>
               </Grid>
               <Grid item xs={2} className={classes.item}>
-                <img src={staff.media_image} alt="media" className={classes.itemImage}/>
+                <img src={role.media_image} alt="media" className={classes.itemImage}/>
               </Grid>
             </Grid>
           </Grid>
@@ -167,7 +185,9 @@ const sortKeys = {
   'favorites': 'Character Favorites',
   'media_title': 'Anime Name',
   'media_score': 'Anime Score',
-  'media_year': 'Anime Release Year',
+  'media_season_int': 'Anime Release Season',
+  'media_favorites': 'Anime Favorites',
+  'media_popularity': 'Anime Popularity',
 };
 const sortOrders = {
   'asc': 'Ascending',
@@ -262,14 +282,17 @@ class UnstyledSeiyuu extends React.Component {
     const characters = data['characters']['edges'].map(e => (
       {
         id: e['node']['id'],
-        role: capitalizeWord(e['role']),
-        favorites: e['node']['favourites'],
+        role: capitalizeWord(e['role']) || '',
+        favorites: e['node']['favourites'] || 0,
         image: e['node']['image']['medium'],
         name: e['node']['name']['full'],
-        media_score: e['node']['media']['nodes'][0]['averageScore'],
+        media_score: toFixedNumber((e['node']['media']['nodes'][0]['averageScore'] || 0) / 10),
         media_title: e['node']['media']['nodes'][0]['title']['romaji'],
-        media_year: e['node']['media']['nodes'][0]['seasonYear'],
-        media_image: e['node']['media']['nodes'][0]['coverImage']['medium']
+        media_season: joinSeason(e['node']['media']['nodes'][0]['season'], e['node']['media']['nodes'][0]['seasonYear']),
+        media_season_int: e['node']['media']['nodes'][0]['seasonInt'] || 0,
+        media_image: e['node']['media']['nodes'][0]['coverImage']['medium'],
+        media_favorites: e['node']['media']['nodes'][0]['favourites'] || 0,
+        media_popularity: e['node']['media']['nodes'][0]['popularity'] || 0,
       }
     ));
     return characters;
@@ -306,7 +329,6 @@ class UnstyledSeiyuu extends React.Component {
       })
     });
     const reply = await response.json();
-    console.log(reply);
     const data = reply['data']['Staff'];
     this.setState({
       id: data['id'],
@@ -322,12 +344,19 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   componentDidMount() {
-    this.fetchStaff()
+    try {
+      this.fetchStaff()
+    } catch (error) {
+      console.error('fetch error', error);
+      this.setState({
+        snackbar_open: true,
+        snackbar_message: "Fetching seiyuu data failed. Please try again or report.",
+      });
+    }
   }
 
   sortCharacters(sort_key, order, characters) {
     const order_int = (order === 'asc') ? 1 : -1;
-    console.log("Start sorting");
     characters.sort((a, b) => {
       let a_key = a[sort_key];
       let b_key = b[sort_key];
@@ -339,13 +368,11 @@ class UnstyledSeiyuu extends React.Component {
       }
       return 0;
     });
-    console.log("End sorting")
     return characters;
   }
 
   changeOrder(sort_order) {
     if (sort_order in sortOrders) {
-      console.log(`Set order ${sort_order}`);
 
       const characters = this.sortCharacters(this.state.sort_key, sort_order, this.state.characters);
       this.setState({
@@ -359,7 +386,6 @@ class UnstyledSeiyuu extends React.Component {
 
   changeKey(sort_key) {
     if (sort_key in sortKeys) {
-      console.log(`Set sort_key ${sort_key}`);
 
       const characters = this.sortCharacters(sort_key, this.state.sort_order, this.state.characters);
       this.setState({
