@@ -44,14 +44,13 @@ const SearchResultItem = (props) => {
         <ListItemText
           disableTypography={true}
           primary={
-            <>
+            <div style={{display: 'flex', justifyContent: 'space-between'}}>
+              <Typography variant="body1">{props.name}</Typography>
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}}>
-                  <Typography variant="body1">{props.name}</Typography>
-                  
-                  <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
                   <Typography variant="body2" style={{fontSize: "0.875rem"}}>{props.favorites}</Typography>
+                  <Icon style={{paddingLeft: "0.3rem", fontSize: "0.875rem"}}>favorite</Icon>
               </div>
-            </>
+            </div>
           }
           secondary={
               <Typography variant="body2" style={{fontSize: "0.875rem"}}>Roles: {props.characters}</Typography>
