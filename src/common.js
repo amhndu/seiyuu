@@ -67,6 +67,7 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                     }
                     media {
                         nodes {
+                            type
                             averageScore
                             title {
                                 romaji

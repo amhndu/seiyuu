@@ -282,22 +282,27 @@ class UnstyledSeiyuu extends React.Component {
     const reply = await response.json();
     const data = reply['data']['Staff']
     console.assert(data['id'] === this.state.id);
-    const characters = data['characters']['edges'].map(e => (
-      {
-        id: e['node']['id'],
-        role: capitalizeWord(e['role']) || '',
-        favorites: e['node']['favourites'] || 0,
-        image: e['node']['image']['medium'],
-        name: e['node']['name']['full'],
-        media_score: toFixedNumber((e['node']['media']['nodes'][0]['averageScore'] || 0) / 10),
-        media_title: e['node']['media']['nodes'][0]['title']['romaji'],
-        media_season: joinSeason(e['node']['media']['nodes'][0]['season'], e['node']['media']['nodes'][0]['seasonYear']),
-        media_season_int: e['node']['media']['nodes'][0]['seasonInt'] || 0,
-        media_image: e['node']['media']['nodes'][0]['coverImage']['medium'],
-        media_favorites: e['node']['media']['nodes'][0]['favourites'] || 0,
-        media_popularity: e['node']['media']['nodes'][0]['popularity'] || 0,
-      }
-    ));
+    const characters = [];
+    data['characters']['edges'].forEach(e => {
+      e['node']['media']['nodes'].forEach(m => {
+        if (m['type'] === 'ANIME') {
+          characters.push({
+            id: e['node']['id'],
+            role: capitalizeWord(e['role']) || '',
+            favorites: e['node']['favourites'] || 0,
+            image: e['node']['image']['medium'],
+            name: e['node']['name']['full'],
+            media_score: toFixedNumber((m['averageScore'] || 0) / 10),
+            media_title: m['title']['romaji'],
+            media_season: joinSeason(m['season'], m['seasonYear']),
+            media_season_int: m['seasonInt'] || 0,
+            media_image: m['coverImage']['medium'],
+            media_favorites: m['favourites'] || 0,
+            media_popularity: m['popularity'] || 0,
+          });
+        }
+      })
+    });
     return characters;
   }
 
