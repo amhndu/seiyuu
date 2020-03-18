@@ -89,20 +89,26 @@ class UnstyledSearch extends React.Component {
     this.last_page = Number.MAX_SAFE_INTEGER;
   }
 
+  componentDidUpdate(prevProps) {
+    console.log("componentDidUpdate");
+    if (this.props.location !== prevProps.location) {
+      this.fetchIfQuery();
+    }
+  }
+
   componentDidMount() {
-    console.log("Component did mount");
-    console.dir(this.state);
-    console.log(this.search_data);
-    console.log(this.next_page);
-    // this.state = {
-    //   query_text: '',
-    //   seiyuu_results: [],
-    //   is_loading: false,
-    //   has_results: false,
-    // };
-    // this.search_data = [];
-    // this.next_page = 1;
-    // this.last_page = Number.MAX_SAFE_INTEGER;
+    this.fetchIfQuery();
+  }
+
+  fetchIfQuery() {
+      const query = this.props.match.params.query;
+      console.log(query);
+      if (query) {
+        this.search_data = [];
+        this.next_page = 1;
+        this.last_page = Number.MAX_SAFE_INTEGER;
+        this.setState({ query_text: query }, () => this.fetchResults(true));
+      }
   }
 
   hasNextPage() {
@@ -116,8 +122,9 @@ class UnstyledSearch extends React.Component {
     }
 
     let done = false;
+    let previous_results = this.state.seiyuu_results;
     if (new_search) {
-      this.setState({ seiyuu_results: [] });
+      previous_results = [];
     }
     this.setState({ is_loading: true });
 
@@ -151,7 +158,6 @@ class UnstyledSearch extends React.Component {
           name: staff['name']['full'],
           characters: staff['characters']['pageInfo']['total'],
         }));
-        console.log(transformed);
         console.log(transformed.filter(staff => staff.characters > 0));
         this.search_data = this.search_data.concat(transformed.filter(staff => staff.characters > 0));
       }
@@ -162,7 +168,7 @@ class UnstyledSearch extends React.Component {
       }
     }
     
-    const new_results = this.state.seiyuu_results.concat(this.search_data.splice(0, RESULTS_PER_PAGE));
+    const new_results = previous_results.concat(this.search_data.splice(0, RESULTS_PER_PAGE));
     this.setState({
       seiyuu_results: new_results,
       is_loading: false,
@@ -171,13 +177,10 @@ class UnstyledSearch extends React.Component {
     console.log('done', this.state);
   }
 
-  search() {
+  handleSubmit() {
     console.log("Searching");
     if (this.state.query_text) {
-      this.search_data = [];
-      this.next_page = 1;
-      this.last_page = Number.MAX_SAFE_INTEGER;
-      this.fetchResults(true);
+      this.props.history.push(`/search/${this.state.query_text}`);
     }
   }
 
@@ -191,11 +194,12 @@ class UnstyledSearch extends React.Component {
     return (
       <div>
         <div>
-          <form onSubmit={() => this.search()} className={classes.searchForm}>
+          <form onSubmit={() => this.handleSubmit()} className={classes.searchForm}>
             <TextField
               variant="outlined"
               fullWidth
               placeholder={randomSeiyuuPlaceholder()}
+              value={this.state.query_text}
               onChange={event => this.setState({ query_text: event.target.value })}
               InputProps={{
                 endAdornment:

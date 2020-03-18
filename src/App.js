@@ -8,8 +8,7 @@ import { Seiyuu } from "./components/seiyuu"
 const App = () => (
     <Layout>
         <Switch>
-            <Route exact path="/" component={Search} />
-            {/* <Route path="/search/:name" component={Search} /> */}
+            <Route exact path={["/", "/search/:query"]} component={Search} />
             <Route exact path="/seiyuu/:id" component={Seiyuu} />
         </Switch>
     </Layout>
