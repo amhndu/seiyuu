@@ -92,15 +92,15 @@ class UnstyledSearch extends React.Component {
   componentDidUpdate(prevProps) {
     console.log("componentDidUpdate");
     if (this.props.location !== prevProps.location) {
-      this.fetchIfQuery();
+      this.updateIfQuery();
     }
   }
 
   componentDidMount() {
-    this.fetchIfQuery();
+    this.updateIfQuery();
   }
 
-  fetchIfQuery() {
+  updateIfQuery() {
       const query = this.props.match.params.query;
       console.log(query);
       if (query) {

@@ -2,8 +2,11 @@ import React from "react"
 import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
   Button, Menu, MenuItem, Grow }
   from "@material-ui/core"
-import { withStyles, makeStyles } from '@material-ui/core/styles';
+import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
+import { FixedSizeList as VirtualizedList } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { withWidth } from "@material-ui/core"
 
 import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY } from "../common";
 
@@ -16,6 +19,16 @@ const styles = theme => ({
   },
   listPaper: {
     padding: theme.spacing(1),
+    [theme.breakpoints.up('md')]: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    [theme.breakpoints.down('md')]: {
+      height: '100vh',
+      display: 'block',
+      overflowX: 'hidden',
+    },
   },
   item: {
     padding: theme.spacing(0.5),
@@ -41,6 +54,22 @@ const styles = theme => ({
     justifyContent: 'center',
     height: '100%',
     alignItems: 'center',
+  },
+  listItem: {
+    [theme.breakpoints.up('md')]: {
+      height: 120,
+    },
+    [theme.breakpoints.down('md')]: {
+      height: 120*2,
+    },
+  },
+  listContainer: {
+    [theme.breakpoints.up('md')]: {
+      flex: '1 1 auto',
+    },
+    [theme.breakpoints.down('md')]: {
+      height: '100%',
+    },
   }
 });
 
@@ -69,11 +98,12 @@ const SeiyuuDescription = (props) => {
       </div>
     </>)
 }
+
 const CharacterItem = (props) => {
   const classes = makeStyles(styles)();
 
   return (
-    <ListItem button divider={props.divider}>
+    <ListItem divider={props.divider} className={classes.listItem}>
       <Grid container>
         <Grid container item md={6} justify="flex-start" className={classes.item}>
           <Grid item xs={2} className={classes.item}>
@@ -103,17 +133,45 @@ const CharacterItem = (props) => {
   )
 }
 
-const CharacterList = (props) => {
+const Row = ({ index, style, data }) => {
+  const c = data[index];
   return (
-    <List>
-      {props.data.map((c, i) =>
-        <CharacterItem key={c.id} role={c.role} image={c.image} name={c.name} favorites={c.favorites}
-              mediaTitle={c.media_title} mediaScore={c.media_score} mediaYear={c.media_year} mediaImage={c.media_image}
-              divider={i < props.data.length - 1} />
-      )}
-    </List>
+    <div style={style}>
+      <CharacterItem
+        key={c.id}
+        role={c.role}
+        image={c.image}
+        name={c.name}
+        favorites={c.favorites}
+        mediaTitle={c.media_title}
+        mediaScore={c.media_score}
+        mediaYear={c.media_year}
+        mediaImage={c.media_image}
+        divider={index < data.length - 1} />
+    </div>
   );
 }
+
+const CharacterList = withWidth()((props) => {
+  const theme = useTheme();
+  const itemSize = props.width > theme.breakpoints.width('md') ? 120 : 240;
+
+  return (
+      <AutoSizer>
+        {({ height, width }) => (
+          <VirtualizedList
+            height={height}
+            itemCount={props.data.length}
+            itemSize={240}
+            width={width}
+            itemData={props.data}
+          >
+            {Row}
+          </VirtualizedList>
+        )}
+      </AutoSizer>
+  );
+});
 
 const sortKeys = {
   'name': 'Character Name',
@@ -341,7 +399,7 @@ class UnstyledSeiyuu extends React.Component {
             <SortMenu onChange={key => this.changeKey(key)} selectedKey={this.state.sort_key} keys={sortKeys} />
             <SortMenu onChange={order => this.changeOrder(order)} selectedKey={this.state.sort_order} keys={sortOrders} />
           </div>
-          <CharacterList data={this.state.characters} />
+          <div className={classes.listContainer}><CharacterList data={this.state.characters} /></div>
         </Paper>
       </Grid>
     </Grid>;

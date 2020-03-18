@@ -11,7 +11,9 @@
     "react-helmet": "^5.2.1",
     "react-markdown": "^4.3.1",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "^3.4.0"
+    "react-scripts": "^3.4.0",
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "react-window": "^1.8.5"
   },
   "license": "GPL",
   "scripts": {
