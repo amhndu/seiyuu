@@ -1,10 +1,11 @@
 import React from "react"
 import PropTypes from "prop-types"
 import { Helmet } from "react-helmet"
-import { HashRouter as Router } from "react-router-dom"
+import { HashRouter as Router, Link } from "react-router-dom"
 
 import Header from "./header"
 import "./layout.css"
+import { APP_NAME } from "../common"
 
 const Layout = ({ children }) => {
   return (
@@ -21,7 +22,7 @@ const Layout = ({ children }) => {
             minHeight: '100vh',
           }}
         >
-          <Header siteTitle="Seiyuu" />
+          <Header siteTitle={APP_NAME} />
           <main style={{ margin: '1em', }}>
             {children}
           </main>
@@ -32,7 +33,9 @@ const Layout = ({ children }) => {
             textAlign: 'center',
             color: 'white'
           }}>
-            All anime/seiyuu data provided by anilist.
+            All anime/seiyuu data provided by <a href="https://anilist.com">anilist</a>. <br/>
+            A better seiyuu page.<br/>
+            <Link to="/">Home</Link><br/>
           </footer>
         </div>
       </Router>

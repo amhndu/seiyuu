@@ -91,4 +91,4 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
 
 export const PLACEHOLDER_SEIYUUS = ['Kana Hanazawa', 'Sugita Tomokazu', 'Kamiya Hiroshi', 'Uchida Maaya'];
 
-export const APP_NAME = "Seiyuu";
+export const APP_NAME = "SeiyuuList";

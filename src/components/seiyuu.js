@@ -105,6 +105,13 @@ const joinSeason = (season, year) => {
   return capitalizeWord(season) + ' ' + year;
 }
 
+const yearToSeasonInt = (n) => {
+  if (!n) {
+    return 0;
+  }
+  return 100 + n % 100;
+}
+
 const SeiyuuDescription = (props) => {
   const classes = makeStyles(styles)();
 
@@ -304,7 +311,7 @@ class UnstyledSeiyuu extends React.Component {
             media_score: toFixedNumber((m['averageScore'] || 0) / 10),
             media_title: m['title']['romaji'],
             media_season: joinSeason(m['season'], m['seasonYear']),
-            media_season_int: m['seasonInt'] || 0,
+            media_season_int: m['seasonInt'] || yearToSeasonInt(m['seasonYear']),
             media_image: m['coverImage']['medium'],
             media_popularity: m['popularity'] || 0,
             media_url: m['siteUrl'],

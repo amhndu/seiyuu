@@ -8,3 +8,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+footer a, footer a:visited, footer a:link {
+  color: lightblue;
+  text-decoration: none;
+}
