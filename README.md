@@ -7,7 +7,7 @@ It lets you search anime voice actors and browse all of their character roles. U
 This is particularly useful because popular voice actors tend to have many roles, so looking at their super long list can get you lost.  
 
 
-Try: https://seiyuu.netlify.com/  
+Try: https://seiyuu.now.sh/  
 
 
 Built with React/Material-UI/CRA and uses anilist's graphql API.  
