@@ -130,6 +130,12 @@ const ElidedText = ({ children, maxLength }) => {
   );
 };
 
+const formatDiscriptionText = (description) => {
+  // Convert single newlines to '/n  ' which is a line break in markdown.
+  // Leave double newlines as is, which are paragraph breaks.
+  return description.replace(/\n(?!\n)/g, '  \n');
+}
+
 const SeiyuuDescription = (props) => {
   const classes = makeStyles(styles)();
 
@@ -140,12 +146,12 @@ const SeiyuuDescription = (props) => {
       <Typography variant="h4"><a className={classes.link} href={props.url}>{props.name}</a></Typography>
 
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Icon fontSize="small">favorite</Icon> &nbsp;
+        <Icon style={{color: "red"}}>favorite</Icon> &nbsp;
         <Typography variant="body2">{props.favorites}</Typography>
       </div>
 
       <div className={classes.markdownContainer}>
-        <ReactMarkdown source={props.description} />
+        <ReactMarkdown source={formatDiscriptionText(props.description)} />
       </div>
     </>)
 }

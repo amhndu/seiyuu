@@ -21,18 +21,14 @@ const styles = theme => ({
     alignItems: 'center'
   },
   searchForm: {
-    [theme.breakpoints.up('sm')]: {
-      width: '60%',
-    },
+    width: '60%',
     [theme.breakpoints.down('sm')]: {
       width: '90%',
     },
     margin: '0 auto'
   },
   resultsPaper: {
-    [theme.breakpoints.up('sm')]: {
-      width: '80%',
-    },
+    width: '80%',
     [theme.breakpoints.down('sm')]: {
       width: '90%',
     },
