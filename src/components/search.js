@@ -35,6 +35,17 @@ const styles = theme => ({
     marginTop: '2em',
     marginLeft: 'auto',
     marginRight: 'auto',
+  },
+  infoPaper: {
+    width: '60%',
+    marginTop: '4em',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    padding: theme.spacing(4),
+    [theme.breakpoints.down('sm')]: {
+      width: '90%',
+      padding: theme.spacing(3),
+    },
   }
 });
 
@@ -242,14 +253,23 @@ class UnstyledSearch extends React.Component {
           </form>
         </div>
         {this.state.is_loading && <LinearProgress variant="query" className={classes.searchForm}/>}
-        {this.state.has_results &&
+        {this.state.has_results ?
             <>
               <SearchResults data={this.state.seiyuu_results} />
               <div style={{display: 'flex', justifyContent: 'center'}}>
                 <Button disabled={this.state.is_loading || !this.hasNextPage()}
                     endIcon={<Icon>expand_more</Icon>} onClick={() => this.more()}>More</Button>
               </div>
-            </>}
+            </> :
+            <div className={classes.centerFlex}>
+              <Paper className={classes.infoPaper}>
+                <Typography variant="body1">
+                Search anime voice actors and browse all of their character roles.
+                Unlike the pages from anilist/MAL, <b>{APP_NAME}</b> gives you more information on the anime alongside the character, allowing you to sort the list however you want. Thus you won't get lost reading the super-long lists of popular seiyuus.
+                </Typography>
+              </Paper>
+            </div>
+            }
       </div>
     );
   }
