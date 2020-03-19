@@ -1,6 +1,6 @@
 import React from "react"
 import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
-  Button, Menu, MenuItem, Grow, useMediaQuery }
+  Button, Menu, MenuItem, Grow, Tooltip, useMediaQuery }
   from "@material-ui/core"
 import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'
@@ -21,11 +21,9 @@ const styles = theme => ({
   },
   listPaper: {
     padding: theme.spacing(1),
-    [theme.breakpoints.up('sm')]: {
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    },
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
     [theme.breakpoints.down('sm')]: {
       height: '100vh',
       display: 'block',
@@ -34,11 +32,14 @@ const styles = theme => ({
   },
   item: {
     padding: theme.spacing(0.5),
+    [theme.breakpoints.down('sm')]: {
+      padding: '1px',
+    }
   },
   itemImage: {
     display: 'block',
+    maxHeight: '100px',
     maxWidth: '100%',
-    maxHeight: '100%',
     margin: 'auto'
   },
   itemRight: {
@@ -58,19 +59,17 @@ const styles = theme => ({
     alignItems: 'center',
   },
   listItem: {
-    [theme.breakpoints.up('sm')]: {
-      height: 120,
-      maxHeight: 120,
-    },
+    height: '120px',
+    maxHeight: '120px',
     [theme.breakpoints.down('sm')]: {
-      height: 120*2,
-      maxHeight: 120*2
+      height: '240px',
+      maxHeight: '240px',
+      paddingLeft: '0px',
+      paddingRight: '0px',
     },
   },
   listContainer: {
-    [theme.breakpoints.up('sm')]: {
-      flex: '1 1 auto',
-    },
+    flex: '1 1 auto',
     [theme.breakpoints.down('sm')]: {
       height: '100%',
     },
@@ -112,6 +111,25 @@ const yearToSeasonInt = (n) => {
   return 100 + n % 100;
 }
 
+const ElidedText = ({ children, maxLength }) => {
+  let s = children;
+
+  if (s.length >= maxLength) {
+    s = s.substring(0, maxLength) + '...';
+    return (
+      <Tooltip title={children} interactive>
+        <span>{s}</span>
+      </Tooltip>
+    )
+  }
+
+  return (
+    <>
+      {s}
+    </>
+  );
+};
+
 const SeiyuuDescription = (props) => {
   const classes = makeStyles(styles)();
 
@@ -148,7 +166,11 @@ class UnstyledCharacterItem extends React.PureComponent {
                 <img src={role.image} alt="character" className={classes.itemImage}/>
               </Grid>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1"><a className={classes.link} href={role.url}>{role.name}</a></Typography>
+                <Typography variant="body1">
+                  <a className={classes.link} href={role.url}>
+                    <ElidedText maxLength={80}>{role.name}</ElidedText>
+                  </a>
+                </Typography>
                 <Typography variant="body2">{role.role}</Typography>
                 <div className={classes.centerFlex}>
                   <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
@@ -158,7 +180,11 @@ class UnstyledCharacterItem extends React.PureComponent {
             </Grid>
             <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
               <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1" style={{textOverflow: 'ellipsis'}}><a className={classes.link} href={role.media_url}>{role.media_title}</a></Typography>
+                <Typography variant="body1">
+                  <a className={classes.link} href={role.media_url}>
+                    <ElidedText maxLength={80}>{role.media_title}</ElidedText>
+                  </a>
+                </Typography>
                 <Typography variant="body2">{role.media_season}</Typography>
                 <Typography variant="body2">
                   <b>Score</b>: {role.media_score} &nbsp; <b>Popularity</b>: {role.media_popularity}
@@ -179,7 +205,8 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 
 const CharacterList = (props) => {
   const theme = useTheme();
-  const itemSize = useMediaQuery(theme.breakpoints.up('sm')) ? 120 : 240;
+  const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
+  console.log('mediaQuery', theme.breakpoints.up('sm'));
   console.log('itemSize', itemSize);
 
   return (
