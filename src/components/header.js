@@ -5,7 +5,6 @@ import { Link } from "react-router-dom"
 const Header = ({ siteTitle }) => (
   <header
     style={{
-      background: `rebeccapurple`,
       marginBottom: `1.45rem`,
     }}
   >

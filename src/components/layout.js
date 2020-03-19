@@ -29,7 +29,6 @@ const Layout = ({ children }) => {
           <footer style={{
             padding: '1em 0.5em',
             marginTop: 'auto',
-            background: 'rebeccapurple',
             textAlign: 'center',
             color: 'white'
           }}>
