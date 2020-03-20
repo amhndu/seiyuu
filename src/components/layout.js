@@ -32,7 +32,7 @@ const Layout = ({ children }) => {
             textAlign: 'center',
             color: 'white'
           }}>
-            All anime/seiyuu data provided by <a href="https://anilist.com">anilist</a>. <br/>
+            All anime/seiyuu data provided by <a href="https://anilist.co">anilist</a>. <br/>
             A better seiyuu page.<br/>
             <Link to="/">Home</Link><br/>
           </footer>
