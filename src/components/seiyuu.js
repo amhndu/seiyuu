@@ -94,6 +94,13 @@ const capitalizeWord = (word) => {
   return word;
 }
 
+const capitalizeSentence = (sentence) => {
+  if (!sentence) {
+    return '';
+  }
+  return sentence.split(' ').map(capitalizeWord).join(' ');
+}
+
 const toFixedNumber = (n) => Number.parseFloat(n).toFixed(2)
 
 const joinSeason = (season, year) => {
@@ -104,7 +111,10 @@ const joinSeason = (season, year) => {
   return capitalizeWord(season) + ' ' + year;
 }
 
-const yearToSeasonInt = (n) => {
+const yearToSeasonInt = (n, status) => {
+  if (status == 'NOT_YET_RELEASED') {
+    return Number.MAX_SAFE_INTEGER;
+  }
   if (!n) {
     return 0;
   }
@@ -191,9 +201,12 @@ class UnstyledCharacterItem extends React.PureComponent {
                     <ElidedText maxLength={80}>{role.media_title}</ElidedText>
                   </a>
                 </Typography>
-                <Typography variant="body2">{role.media_season}</Typography>
                 <Typography variant="body2">
-                  <b>Score</b>: {role.media_score} &nbsp; <b>Popularity</b>: {role.media_popularity}
+                  {role.media_season}
+                </Typography>
+                <Typography variant="body2">
+                  <b>Score</b>: {role.media_score} &nbsp;
+                  <b>Popularity</b>: {role.media_popularity} &nbsp;
                 </Typography>
               </Grid>
               <Grid item xs={2} className={classes.item}>
@@ -241,6 +254,17 @@ const sortKeys = {
 const sortOrders = {
   'asc': 'Ascending',
   'desc': 'Descending',
+};
+const filterCharacterType = {
+  'All': 'All',
+  'Main': 'Main',
+  'Supporting': 'Supporting',
+};
+const mediaStatus = {
+  'All': 'All',
+  'Finished': 'Finished',
+  'Releasing': 'Releasing',
+  'Not Yet Released': 'Not Yet Releasing',
 };
 
 const SortMenu = (props) => {
@@ -292,6 +316,8 @@ const SortMenu = (props) => {
 class UnstyledSeiyuu extends React.Component {
   constructor(props) {
     super(props)
+
+    this.characters = [];
     this.state = {
       id: this.props.match.params.id,
       name: 'Loading...',
@@ -299,10 +325,11 @@ class UnstyledSeiyuu extends React.Component {
       image: '',
       description: 'Loading...',
       anilistUrl: '#',
-      characters: [],
+      characters_view: [],
       is_loading: true,
       sort_key: Object.keys(sortKeys)[0],
       sort_order: Object.keys(sortOrders)[0],
+      filter_char_type: Object.keys(filterCharacterType)[0],
 
       snackbar_open: false,
       snackbar_message: '',
@@ -342,10 +369,11 @@ class UnstyledSeiyuu extends React.Component {
             media_score: toFixedNumber((m['averageScore'] || 0) / 10),
             media_title: m['title']['romaji'],
             media_season: joinSeason(m['season'], m['seasonYear']),
-            media_season_int: m['seasonInt'] || yearToSeasonInt(m['seasonYear']),
+            media_season_int: m['seasonInt'] || yearToSeasonInt(m['seasonYear'], m['status']),
             media_image: m['coverImage']['medium'],
             media_popularity: m['popularity'] || 0,
             media_url: m['siteUrl'],
+            media_status: capitalizeSentence(m['status']),
           });
         }
       })
@@ -359,11 +387,11 @@ class UnstyledSeiyuu extends React.Component {
       promises.push(this.fetchList(page));
     }
     const character_lists = await Promise.all(promises);
-    const characters = this.sortCharacters(this.state.sort_key, this.state.sort_order,
-                                            [].concat.apply([], character_lists));
+    this.characters = [].concat.apply([], character_lists);
 
+    const sorted = this.sortCharacters(this.state.sort_key, this.state.sort_order, this.characters, this.state.filter_char_type);
     this.setState({
-      characters: characters,
+      characters_view: sorted,
       is_loading: false,
     });
 
@@ -410,9 +438,16 @@ class UnstyledSeiyuu extends React.Component {
     }
   }
 
-  sortCharacters(sort_key, order, characters) {
+  filter(filter_char_type, characters) {
+    return characters.filter(c => (
+      (filter_char_type == 'All' || filter_char_type == c.role)
+    ));
+  }
+
+  sortCharacters(sort_key, order, characters, filter_char_type) {
     const order_int = (order === 'asc') ? 1 : -1;
-    characters.sort((a, b) => {
+    const copy = characters.slice();
+    copy.sort((a, b) => {
       let a_key = a[sort_key];
       let b_key = b[sort_key];
       if (a_key < b_key) {
@@ -423,16 +458,16 @@ class UnstyledSeiyuu extends React.Component {
       }
       return 0;
     });
-    return characters;
+    return this.filter(filter_char_type, copy);
   }
 
   changeOrder(sort_order) {
     if (sort_order in sortOrders) {
 
-      const characters = this.sortCharacters(this.state.sort_key, sort_order, this.state.characters);
+      const characters_view = this.sortCharacters(this.state.sort_key, sort_order, this.characters, this.state.filter_char_type);
       this.setState({
         sort_order,
-        characters
+        characters_view
       })
     } else {
       console.error(`changeOrder: ${sort_order} not in sortOrders`);
@@ -442,10 +477,22 @@ class UnstyledSeiyuu extends React.Component {
   changeKey(sort_key) {
     if (sort_key in sortKeys) {
 
-      const characters = this.sortCharacters(sort_key, this.state.sort_order, this.state.characters);
+      const characters_view = this.sortCharacters(sort_key, this.state.sort_order, this.characters, this.state.filter_char_type);
       this.setState({
           sort_key,
-          characters,
+          characters_view,
+      });
+    } else {
+      console.error(`changeKey: ${sort_key} not in sortKeys`);
+    }
+  }
+
+  setCharacterTypeFilter(filter) {
+    if (filter in filterCharacterType) {
+      const characters_view = this.sortCharacters(this.state.sort_key, this.state.sort_order, this.characters, filter);
+      this.setState({
+          filter_char_type: filter,
+          characters_view,
       });
     } else {
       console.error(`changeKey: ${sort_key} not in sortKeys`);
@@ -470,12 +517,18 @@ class UnstyledSeiyuu extends React.Component {
       </Grid>
       <Grid item xs sm={9}>
         <Paper className={classes.listPaper}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Typography variant="body2" component="span">Sort by: </Typography>
-            <SortMenu onChange={key => this.changeKey(key)} selectedKey={this.state.sort_key} keys={sortKeys} />
-            <SortMenu onChange={order => this.changeOrder(order)} selectedKey={this.state.sort_order} keys={sortOrders} />
-          </div>
-          <div className={classes.listContainer}><CharacterList data={this.state.characters} /></div>
+          <Grid container>
+            <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
+              <Typography variant="body2" component="span">Filter by: </Typography>
+              <SortMenu onChange={f => this.setCharacterTypeFilter(f)} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
+            </Grid>
+            <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Typography variant="body2" component="span">Sort by: </Typography>
+              <SortMenu onChange={key => this.changeKey(key)} selectedKey={this.state.sort_key} keys={sortKeys} />
+              <SortMenu onChange={order => this.changeOrder(order)} selectedKey={this.state.sort_order} keys={sortOrders} />
+            </Grid>
+          </Grid>
+          <div className={classes.listContainer}><CharacterList data={this.state.characters_view} /></div>
         </Paper>
       </Grid>
     </Grid>;

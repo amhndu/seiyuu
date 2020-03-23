@@ -81,6 +81,7 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                             season
                             seasonInt
                             popularity
+                            status
                         }
                     }
                 }
