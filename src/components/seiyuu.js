@@ -212,8 +212,6 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 const CharacterList = (props) => {
   const theme = useTheme();
   const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
-  console.log('mediaQuery', theme.breakpoints.up('sm'));
-  console.log('itemSize', itemSize);
 
   return (
       <AutoSizer>
@@ -390,10 +388,10 @@ class UnstyledSeiyuu extends React.Component {
     this.setState({
       id: data['id'],
       name: data['name']['full'],
-      favorites: data['favourites'],
-      image: data['image']['large'],
-      description: data['description'],
-      anilistUrl: data['siteUrl'],
+      favorites: data['favourites'] || 0,
+      image: data['image']['large'] || '',
+      description: data['description'] || '',
+      anilistUrl: data['siteUrl'] || '',
     });
     
     let total_pages = data['characters']['pageInfo']['lastPage'];
