@@ -153,11 +153,14 @@ const SeiyuuDescription = (props) => {
     <>
       <div style={{textAlign: 'center'}}><img src={props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
 
-      <Typography variant="h4"><a className={classes.link} href={props.url}>{props.name}</a></Typography>
+      <Typography variant="h4">{props.name}</Typography>
 
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Icon style={{color: "red"}}>favorite</Icon> &nbsp;
-        <Typography variant="body2">{props.favorites}</Typography>
+      <div style={{display: 'flex', justifyContent: 'space-between'}}>
+        <a className={classes.link} href={props.url} target="_blank"><Typography variant="body2"><u>Anilist</u></Typography></a>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Icon style={{color: "red"}}>favorite</Icon> &nbsp;
+          <Typography variant="body2">{props.favorites}</Typography>
+        </div>
       </div>
 
       <div className={classes.markdownContainer}>
@@ -183,7 +186,7 @@ class UnstyledCharacterItem extends React.PureComponent {
               </Grid>
               <Grid item xs={10} className={classes.item}>
                 <Typography variant="body1">
-                  <a className={classes.link} href={role.url}>
+                  <a className={classes.link} href={role.url} target='_blank'>
                     <ElidedText maxLength={80}>{role.name}</ElidedText>
                   </a>
                 </Typography>
@@ -197,7 +200,7 @@ class UnstyledCharacterItem extends React.PureComponent {
             <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
               <Grid item xs={10} className={classes.item}>
                 <Typography variant="body1">
-                  <a className={classes.link} href={role.media_url}>
+                  <a className={classes.link} href={role.media_url} target='_blank'>
                     <ElidedText maxLength={80}>{role.media_title}</ElidedText>
                   </a>
                 </Typography>
