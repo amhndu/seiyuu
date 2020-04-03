@@ -256,15 +256,14 @@ const sortOrders = {
   'desc': 'Descending',
 };
 const filterCharacterType = {
-  'All': 'All',
+  'All': 'All Roles',
   'Main': 'Main',
   'Supporting': 'Supporting',
 };
 const mediaStatus = {
-  'All': 'All',
+  'All': 'All Status',
   'Finished': 'Finished',
-  'Releasing': 'Releasing',
-  'Not Yet Released': 'Not Yet Releasing',
+  'Releasing': 'Airing',
 };
 
 const SortMenu = (props) => {
@@ -330,6 +329,7 @@ class UnstyledSeiyuu extends React.Component {
       sort_key: Object.keys(sortKeys)[0],
       sort_order: Object.keys(sortOrders)[0],
       filter_char_type: Object.keys(filterCharacterType)[0],
+      filter_status: Object.keys(mediaStatus)[0],
 
       snackbar_open: false,
       snackbar_message: '',
@@ -389,7 +389,7 @@ class UnstyledSeiyuu extends React.Component {
     const character_lists = await Promise.all(promises);
     this.characters = [].concat.apply([], character_lists);
 
-    const sorted = this.sortCharacters(this.state.sort_key, this.state.sort_order, this.characters, this.state.filter_char_type);
+    const sorted = this.sortFilterCharacters(this.state, this.characters);
     this.setState({
       characters_view: sorted,
       is_loading: false,
@@ -438,18 +438,19 @@ class UnstyledSeiyuu extends React.Component {
     }
   }
 
-  filter(filter_char_type, characters) {
+  filter(state, characters) {
     return characters.filter(c => (
-      (filter_char_type == 'All' || filter_char_type == c.role)
+      (state.filter_char_type == 'All' || state.filter_char_type == c.role) &&
+      (state.filter_status == 'All' || state.filter_status == c.media_status)
     ));
   }
 
-  sortCharacters(sort_key, order, characters, filter_char_type) {
-    const order_int = (order === 'asc') ? 1 : -1;
+  sortFilterCharacters(state, characters) {
+    const order_int = (state.sort_order === 'asc') ? 1 : -1;
     const copy = characters.slice();
     copy.sort((a, b) => {
-      let a_key = a[sort_key];
-      let b_key = b[sort_key];
+      let a_key = a[state.sort_key];
+      let b_key = b[state.sort_key];
       if (a_key < b_key) {
         return -order_int;
       }
@@ -458,50 +459,28 @@ class UnstyledSeiyuu extends React.Component {
       }
       return 0;
     });
-    return this.filter(filter_char_type, copy);
+    return this.filter(state, copy);
   }
 
-  changeOrder(sort_order) {
-    if (sort_order in sortOrders) {
-
-      const characters_view = this.sortCharacters(this.state.sort_key, sort_order, this.characters, this.state.filter_char_type);
-      this.setState({
-        sort_order,
-        characters_view
-      })
-    } else {
-      console.error(`changeOrder: ${sort_order} not in sortOrders`);
+  changeView(new_state) {
+    let state = {
+      sort_key: this.state.sort_key,
+      sort_order: this.state.sort_order,
+      filter_char_type: this.state.filter_char_type,
+      filter_status: this.state.filter_status,
+      ...new_state
     }
-  }
-
-  changeKey(sort_key) {
-    if (sort_key in sortKeys) {
-
-      const characters_view = this.sortCharacters(sort_key, this.state.sort_order, this.characters, this.state.filter_char_type);
-      this.setState({
-          sort_key,
-          characters_view,
-      });
-    } else {
-      console.error(`changeKey: ${sort_key} not in sortKeys`);
-    }
-  }
-
-  setCharacterTypeFilter(filter) {
-    if (filter in filterCharacterType) {
-      const characters_view = this.sortCharacters(this.state.sort_key, this.state.sort_order, this.characters, filter);
-      this.setState({
-          filter_char_type: filter,
-          characters_view,
-      });
-    } else {
-      console.error(`changeKey: ${sort_key} not in sortKeys`);
-    }
+    let characters_view = this.sortFilterCharacters(state, this.characters);
+    this.setState({
+      characters_view,
+      ...new_state
+    });
   }
 
   setSnackbar(snackbar_open) {
     this.setState({ snackbar_open });
   }
+
   render() {
     const classes = this.props.classes;
     const PageGrid = () => <Grid container spacing={2}>
@@ -520,12 +499,13 @@ class UnstyledSeiyuu extends React.Component {
           <Grid container>
             <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
               <Typography variant="body2" component="span">Filter by: </Typography>
-              <SortMenu onChange={f => this.setCharacterTypeFilter(f)} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
+              <SortMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
+              <SortMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
             </Grid>
             <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <Typography variant="body2" component="span">Sort by: </Typography>
-              <SortMenu onChange={key => this.changeKey(key)} selectedKey={this.state.sort_key} keys={sortKeys} />
-              <SortMenu onChange={order => this.changeOrder(order)} selectedKey={this.state.sort_order} keys={sortOrders} />
+              <SortMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
+              <SortMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
             </Grid>
           </Grid>
           <div className={classes.listContainer}><CharacterList data={this.state.characters_view} /></div>
