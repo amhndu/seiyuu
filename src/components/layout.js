@@ -34,7 +34,7 @@ const Layout = ({ children }) => {
           }}>
             All anime/seiyuu data provided by <a href="https://anilist.co">anilist</a>. <br/>
             A better seiyuu page.<br/>
-            <Link to="/">Home</Link><br/>
+            <Link to="/">Home</Link> | <a href="https://github.com/amhndu/seiyuu">Source</a> | <a href="https://amish.naidu.dev">Contact Me</a><br/>
           </footer>
         </div>
       </Router>
