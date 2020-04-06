@@ -56,6 +56,22 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
             }
             edges {
                 role
+                media {
+                    siteUrl
+                    type
+                    averageScore
+                    title {
+                        romaji
+                    }
+                    seasonYear
+                    coverImage {
+                        medium
+                    }
+                    season
+                    seasonInt
+                    popularity
+                    status
+                }
                 node {
                     siteUrl
                     id
@@ -65,24 +81,6 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                     }
                     name {
                         full
-                    }
-                    media {
-                        nodes {
-                            siteUrl
-                            type
-                            averageScore
-                            title {
-                                romaji
-                            }
-                            seasonYear
-                            coverImage {
-                                medium
-                            }
-                            season
-                            seasonInt
-                            popularity
-                            status
-                        }
                     }
                 }
             }

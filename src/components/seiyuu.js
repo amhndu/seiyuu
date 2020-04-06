@@ -360,7 +360,7 @@ class UnstyledSeiyuu extends React.Component {
     console.assert(data['id'] === this.state.id);
     const characters = [];
     data['characters']['edges'].forEach(e => {
-      e['node']['media']['nodes'].forEach(m => {
+      e['media'].forEach(m => {
         if (m['type'] === 'ANIME') {
           characters.push({
             id: e['node']['id'],
