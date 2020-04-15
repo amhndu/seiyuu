@@ -12,6 +12,30 @@ import { Link } from "react-router-dom"
 import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY, APP_NAME } from "../common";
 import { ErrorSnackbar } from "../components/messageSnackbar"
 
+// used for testing/debugging
+const cachedFetch = (url, options) => {
+  let cacheKey = url + options.body;
+
+  let cached = sessionStorage.getItem(cacheKey)
+  if (cached !== null) {
+    let response = new Response(new Blob([cached]))
+    return Promise.resolve(response)
+  }
+
+  return fetch(url, options).then(response => {
+    if (response.status === 200) {
+      let ct = response.headers.get('Content-Type')
+      if (ct && (ct.match(/application\/json/i) || ct.match(/text\//i))) {
+        response.clone().text().then(content => {
+          sessionStorage.setItem(cacheKey, content)
+        })
+      }
+    }
+    return response
+  })
+}
+
+
 const styles = theme => ({
   root: {
     flexGrow: 1,
@@ -83,6 +107,12 @@ const styles = theme => ({
     '&:visited': {
       color: 'blue'
     },
+  },
+  descriptionCompact: {
+    maxHeight: '100vh',
+    overflowY: 'hidden',
+  },
+  descriptionExpanded: {
   }
 });
 
@@ -146,28 +176,65 @@ const formatDiscriptionText = (description) => {
   return description.replace(/\n(?!\n)/g, '  \n');
 }
 
-const SeiyuuDescription = (props) => {
-  const classes = makeStyles(styles)();
+class UnstyledSeiyuuDescription extends React.Component {
+  constructor(props) {
+    super(props);
 
-  return (
-    <>
-      <div style={{textAlign: 'center'}}><img src={props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
+    this.state = {
+      expand: false,
+      overflow: false,
+    };
+    this.containerRef = React.createRef();
+  }
 
-      <Typography variant="h4">{props.name}</Typography>
+  componentDidMount() {
+    this.setState({
+      overflow: this.containerRef.current.offsetHeight < this.containerRef.current.scrollHeight
+    });
+    console.log('mount', this.state.overflow);
+  }
 
-      <div style={{display: 'flex', justifyContent: 'space-between'}}>
-        <a className={classes.link} href={props.url} target="_blank"><Typography variant="body2"><u>Anilist</u></Typography></a>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Icon style={{color: "red"}}>favorite</Icon> &nbsp;
-          <Typography variant="body2">{props.favorites}</Typography>
+  toggleExpand() {
+    this.setState({
+      expand: !this.state.expand,
+    });
+  }
+
+  render() {
+    const containerClass = this.state.expand ? 'descriptionExpanded' : 'descriptionCompact';
+    const classes = this.props.classes;
+    return (
+      <>
+        <div className={classes[containerClass]} ref={this.containerRef}>
+          <div style={{textAlign: 'center'}}><img src={this.props.image} style={{maxWidth: "80%"}} alt="Seiyuu"/></div>
+
+          <Typography variant="h4">{this.props.name}</Typography>
+
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <a className={classes.link} href={this.props.url} target="_blank"><Typography variant="body2"><u>Anilist</u></Typography></a>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Icon style={{color: "red"}}>favorite</Icon> &nbsp;
+              <Typography variant="body2">{this.props.favorites}</Typography>
+            </div>
+          </div>
+
+          <div className={classes.markdownContainer}>
+            <ReactMarkdown source={formatDiscriptionText(this.props.description)} />
+          </div>
         </div>
-      </div>
-
-      <div className={classes.markdownContainer}>
-        <ReactMarkdown source={formatDiscriptionText(props.description)} />
-      </div>
-    </>)
+        <div style={{textAlign: 'center'}}>
+          <Button
+            size="small"
+            style={{margin: 'auto', display: this.state.overflow ? 'block': 'none'}}
+            onClick={() => this.toggleExpand()}>
+              {this.state.expand ? "Collapse" : "More"}
+          </Button>
+        </div>
+      </>);
+  }
 }
+
+const SeiyuuDescription = withStyles(styles)(UnstyledSeiyuuDescription);
 
 // PureComponent helps with (scrolling) performance
 class UnstyledCharacterItem extends React.PureComponent {
@@ -228,6 +295,7 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 const CharacterList = (props) => {
   const theme = useTheme();
   const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
+  console.log({itemSize, mediaQuery: useMediaQuery(theme.breakpoints.down('sm')) });
 
   return (
       <AutoSizer>
@@ -269,7 +337,7 @@ const mediaStatus = {
   'Releasing': 'Airing',
 };
 
-const SortMenu = (props) => {
+const DropDownMenu = (props) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleOpen = (event) => {
@@ -502,13 +570,13 @@ class UnstyledSeiyuu extends React.Component {
           <Grid container>
             <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
               <Typography variant="body2" component="span">Filter by: </Typography>
-              <SortMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
-              <SortMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
+              <DropDownMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
+              <DropDownMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
             </Grid>
             <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               <Typography variant="body2" component="span">Sort by: </Typography>
-              <SortMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
-              <SortMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
+              <DropDownMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
+              <DropDownMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
             </Grid>
           </Grid>
           <div className={classes.listContainer}><CharacterList data={this.state.characters_view} /></div>
