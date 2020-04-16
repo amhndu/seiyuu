@@ -352,6 +352,10 @@ const sortKeys = {
   'media_season_int': 'Anime Release Season',
   'media_popularity': 'Anime Popularity',
 };
+const sortKeysFolded = {
+  'name': 'Character Name',
+  'favorites': 'Character Favorites',
+};
 const sortOrders = {
   'asc': 'Ascending',
   'desc': 'Descending',
@@ -503,7 +507,7 @@ class UnstyledSeiyuu extends React.Component {
   filter(state, characters) {
     return characters.filter(c => (
       (state.filter_char_type == 'All' || state.filter_char_type == c.role) &&
-      (!state.fold_roles || state.filter_status == 'All' || state.filter_status == c.media_status)
+      (state.fold_roles || state.filter_status == 'All' || state.filter_status == c.media_status)
     ));
   }
 
@@ -535,7 +539,12 @@ class UnstyledSeiyuu extends React.Component {
       filter_char_type: this.state.filter_char_type,
       filter_status: this.state.filter_status,
       ...new_state
+    };
+
+    if ('fold_roles' in new_state && new_state.fold_roles && !(state.sort_key in sortKeysFolded)) {
+      new_state.sort_key = state.sort_key = Object.keys(sortKeysFolded)[0];
     }
+
     let characters_view = this.prepareView(state, this.characters);
     this.setState({
       characters_view,
@@ -562,18 +571,36 @@ class UnstyledSeiyuu extends React.Component {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
-          <Typography variant="caption" component="span">Filter by: </Typography>
-          <DropDownMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
-          <DropDownMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
+          <Typography variant="caption" component="span">Filter by:</Typography>
+          <DropDownMenu 
+              onChange={f => this.changeView({ 'filter_char_type': f })}
+              selectedKey={this.state.filter_char_type}
+              keys={filterCharacterType}
+          />
+          {this.state.fold_roles ||
+            <DropDownMenu
+                onChange={f => this.changeView({ 'filter_status': f })}
+                selectedKey={this.state.filter_status}
+                keys={mediaStatus}
+            />}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-          <Typography variant="caption" component="span">Sort by: </Typography>
-          <DropDownMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
-          <DropDownMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
+          <Typography variant="caption" component="span">Sort by:</Typography>
+          <DropDownMenu
+              onChange={key => this.changeView({ 'sort_key': key })}
+              selectedKey={this.state.sort_key}
+              keys={this.state.fold_roles ? sortKeysFolded : sortKeys}
+          />
+          <DropDownMenu
+              onChange={order => this.changeView({ 'sort_order': order })}
+              selectedKey={this.state.sort_order}
+              keys={sortOrders}
+          />
         </div>
       </div>
       </>
     );
+
     const PageGrid = () => <Grid container spacing={2}>
       <Grid item xs sm={3}>
         <Paper className={classes.descPaper}>
