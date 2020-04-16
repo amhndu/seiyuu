@@ -1,16 +1,17 @@
-import React from "react"
+import React from "react";
 import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
-  Button, Menu, MenuItem, Grow, Tooltip, useMediaQuery }
-  from "@material-ui/core"
+  Button, useMediaQuery, Switch, FormControlLabel }
+  from "@material-ui/core";
 import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown from 'react-markdown';
 import { FixedSizeList as VirtualizedList } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Helmet } from "react-helmet"
-import { Link } from "react-router-dom"
+import { Helmet } from "react-helmet";
 
 import { ANILIST_BASE_URL, CHARACTERS_QUERY, STAFF_QUERY, APP_NAME } from "../common";
-import { ErrorSnackbar } from "../components/messageSnackbar"
+import { ErrorSnackbar } from "../components/messageSnackbar";
+import { DropDownMenu } from "../components/dropdown.js";
+import { ElidedText } from "../components/elidedtext.js";
 
 // used for testing/debugging
 const cachedFetch = (url, options) => {
@@ -151,29 +152,25 @@ const yearToSeasonInt = (n, status) => {
   return 100 + n % 100;
 }
 
-const ElidedText = ({ children, maxLength }) => {
-  let s = children;
-
-  if (s.length >= maxLength) {
-    s = s.substring(0, maxLength) + '...';
-    return (
-      <Tooltip title={children} interactive>
-        <span>{s}</span>
-      </Tooltip>
-    )
-  }
-
-  return (
-    <>
-      {s}
-    </>
-  );
-};
 
 const formatDiscriptionText = (description) => {
   // Convert single newlines to '/n  ' which is a line break in markdown.
   // Leave double newlines as is, which are paragraph breaks.
   return description.replace(/\n(?!\n)/g, '  \n');
+}
+
+const sortByKey = (arr, sort_key, order_int = 1) => {
+  arr.sort((a, b) => {
+    let a_key = a[sort_key];
+    let b_key = b[sort_key];
+    if (a_key < b_key) {
+      return -order_int;
+    }
+    if (a_key > b_key) {
+      return +order_int;
+    }
+    return 0;
+  });
 }
 
 class UnstyledSeiyuuDescription extends React.Component {
@@ -191,7 +188,6 @@ class UnstyledSeiyuuDescription extends React.Component {
     this.setState({
       overflow: this.containerRef.current.offsetHeight < this.containerRef.current.scrollHeight
     });
-    console.log('mount', this.state.overflow);
   }
 
   toggleExpand() {
@@ -240,49 +236,84 @@ const SeiyuuDescription = withStyles(styles)(UnstyledSeiyuuDescription);
 class UnstyledCharacterItem extends React.PureComponent {
   render() {
     const {index, style, data} = this.props;
-    const role = data[index];
+    const role = data.characters[index];
+    const fold = data.fold;
     const classes = this.props.classes;
+
+    const Character = () => (
+      <Grid container item sm={6} justify="flex-start" className={classes.item}>
+        <Grid item xs={2} className={classes.item}>
+          <img src={role.image} alt="character" className={classes.itemImage}/>
+        </Grid>
+        <Grid item xs={10} className={classes.item}>
+          <Typography variant="body1">
+            <a className={classes.link} href={role.url} target='_blank'>
+              <ElidedText maxLength={80}>{role.name}</ElidedText>
+            </a>
+          </Typography>
+          <Typography variant="body2">{role.role}</Typography>
+          <div className={classes.centerFlex}>
+            <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
+            <Typography variant="body2" style={{fontSize: "0.875rem"}}>{role.favorites}</Typography>
+          </div>
+        </Grid>
+      </Grid>);
+
+    const AnimeFlattened = (props) => (
+      <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
+        <Grid item xs={10} className={classes.item}>
+          <Typography variant="body1">
+            <a className={classes.link} href={props.d.media_url} target='_blank'>
+              <ElidedText maxLength={80}>{props.d.media_title}</ElidedText>
+            </a>
+          </Typography>
+          <Typography variant="body2">
+            {props.d.media_season}
+          </Typography>
+          <Typography variant="body2">
+            <b>Score</b>: {props.d.media_score} &nbsp;
+            <b>Popularity</b>: {props.d.media_popularity} &nbsp;
+          </Typography>
+        </Grid>
+        <Grid item xs={2} className={classes.item}>
+          <img src={props.d.media_image} alt="media" className={classes.itemImage}/>
+        </Grid>
+      </Grid>
+    );
+
+    const AnimeFolded = () => (
+      <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
+        <Grid item xs={10} className={classes.item}>
+          <Typography variant="body1">
+            <a className={classes.link} href={role.media_url} target='_blank'>
+              <ElidedText maxLength={80}>{role.media[0].media_title}</ElidedText>
+            </a>
+          </Typography>
+          {role.media.length - 1} more titles
+        </Grid>
+        <Grid item xs={2} className={classes.item}>
+          <img src={role.media[0].media_image} alt="media" className={classes.itemImage}/>
+        </Grid>
+      </Grid>
+    );
+
+    let Anime = null;
+    if (fold) {
+      if (role.media.length > 1) {
+        Anime = AnimeFolded;
+      } else {
+        Anime = () => <AnimeFlattened d={role.media[0]} />;
+      }
+    } else {
+      Anime = () => <AnimeFlattened d={role} />;
+    }
 
     return (
       <div style={style}>
-        <ListItem divider={index < data.length - 1} className={classes.listItem}>
+        <ListItem divider={index < data.characters.length - 1} className={classes.listItem}>
           <Grid container>
-            <Grid container item sm={6} justify="flex-start" className={classes.item}>
-              <Grid item xs={2} className={classes.item}>
-                <img src={role.image} alt="character" className={classes.itemImage}/>
-              </Grid>
-              <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">
-                  <a className={classes.link} href={role.url} target='_blank'>
-                    <ElidedText maxLength={80}>{role.name}</ElidedText>
-                  </a>
-                </Typography>
-                <Typography variant="body2">{role.role}</Typography>
-                <div className={classes.centerFlex}>
-                  <Icon style={{fontSize: "0.875rem"}}>favorite</Icon> &nbsp;
-                  <Typography variant="body2" style={{fontSize: "0.875rem"}}>{role.favorites}</Typography>
-                </div>
-              </Grid>
-            </Grid>
-            <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
-              <Grid item xs={10} className={classes.item}>
-                <Typography variant="body1">
-                  <a className={classes.link} href={role.media_url} target='_blank'>
-                    <ElidedText maxLength={80}>{role.media_title}</ElidedText>
-                  </a>
-                </Typography>
-                <Typography variant="body2">
-                  {role.media_season}
-                </Typography>
-                <Typography variant="body2">
-                  <b>Score</b>: {role.media_score} &nbsp;
-                  <b>Popularity</b>: {role.media_popularity} &nbsp;
-                </Typography>
-              </Grid>
-              <Grid item xs={2} className={classes.item}>
-                <img src={role.media_image} alt="media" className={classes.itemImage}/>
-              </Grid>
-            </Grid>
+            <Character />
+            <Anime />
           </Grid>
         </ListItem>
       </div>
@@ -295,17 +326,16 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 const CharacterList = (props) => {
   const theme = useTheme();
   const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
-  console.log({itemSize, mediaQuery: useMediaQuery(theme.breakpoints.down('sm')) });
 
   return (
       <AutoSizer>
         {({ height, width }) => (
           <VirtualizedList
             height={height}
-            itemCount={props.data.length}
+            itemCount={props.characters.length}
             itemSize={itemSize}
             width={width}
-            itemData={props.data}
+            itemData={{characters: props.characters, fold: props.fold}}
           >
             {CharacterItem}
           </VirtualizedList>
@@ -337,52 +367,6 @@ const mediaStatus = {
   'Releasing': 'Airing',
 };
 
-const DropDownMenu = (props) => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  const handleOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClick = (event, key) => {
-    setAnchorEl(null);
-    props.onChange(key);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  return (
-    <>
-      <Button
-        aria-controls="sort-by"
-        aria-haspopup="true"
-        onClick={handleOpen}
-        endIcon={<Icon>expand_more</Icon>}
-        style={{textTransform: 'none'}}
-      >
-        {props.keys[props.selectedKey]}
-      </Button>
-      <Menu
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-      >
-        {Object.entries(props.keys).map(([key, text]) =>
-          <MenuItem
-            key={key}
-            selected={key === props.selectedKey}
-            onClick={event => handleClick(event, key)}>
-              {text}
-          </MenuItem>
-        )}
-      </Menu>
-    </>
-  );
-}
-
 class UnstyledSeiyuu extends React.Component {
   constructor(props) {
     super(props)
@@ -397,6 +381,8 @@ class UnstyledSeiyuu extends React.Component {
       anilistUrl: '#',
       characters_view: [],
       is_loading: true,
+
+      fold_roles: true, // FIXME
       sort_key: Object.keys(sortKeys)[0],
       sort_order: Object.keys(sortOrders)[0],
       filter_char_type: Object.keys(filterCharacterType)[0],
@@ -408,7 +394,8 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   async fetchList(page) {
-    const response = await fetch(ANILIST_BASE_URL, {
+    // FIXME
+    const response = await cachedFetch(ANILIST_BASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -426,17 +413,10 @@ class UnstyledSeiyuu extends React.Component {
     const reply = await response.json();
     const data = reply['data']['Staff']
     console.assert(data['id'] === this.state.id);
-    const characters = [];
-    data['characters']['edges'].forEach(e => {
-      e['media'].forEach(m => {
+    const characters = data['characters']['edges'].map(e => {
+      const media = e['media'].map(m => {
         if (m['type'] === 'ANIME') {
-          characters.push({
-            id: e['node']['id'],
-            role: capitalizeWord(e['role']) || '',
-            favorites: e['node']['favourites'] || 0,
-            image: e['node']['image']['medium'],
-            name: e['node']['name']['full'],
-            url: e['node']['siteUrl'],
+          return {
             media_score: toFixedNumber((m['averageScore'] || 0) / 10),
             media_title: m['title']['romaji'],
             media_season: joinSeason(m['season'], m['seasonYear']),
@@ -445,9 +425,19 @@ class UnstyledSeiyuu extends React.Component {
             media_popularity: m['popularity'] || 0,
             media_url: m['siteUrl'],
             media_status: capitalizeSentence(m['status']),
-          });
+          };
         }
-      })
+      });
+      sortByKey(media, 'media_season_int');
+      return {
+        id: e['node']['id'],
+        role: capitalizeWord(e['role']) || '',
+        favorites: e['node']['favourites'] || 0,
+        image: e['node']['image']['medium'],
+        name: e['node']['name']['full'],
+        url: e['node']['siteUrl'],
+        media,
+      };
     });
     return characters;
   }
@@ -460,7 +450,7 @@ class UnstyledSeiyuu extends React.Component {
     const character_lists = await Promise.all(promises);
     this.characters = [].concat.apply([], character_lists);
 
-    const sorted = this.sortFilterCharacters(this.state, this.characters);
+    const sorted = this.prepareView(this.state, this.characters);
     this.setState({
       characters_view: sorted,
       is_loading: false,
@@ -469,7 +459,8 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   async fetchStaff() {
-    const response = await fetch(ANILIST_BASE_URL , {
+    // FIXME
+    const response = await cachedFetch(ANILIST_BASE_URL , {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -512,36 +503,40 @@ class UnstyledSeiyuu extends React.Component {
   filter(state, characters) {
     return characters.filter(c => (
       (state.filter_char_type == 'All' || state.filter_char_type == c.role) &&
-      (state.filter_status == 'All' || state.filter_status == c.media_status)
+      (!state.fold_roles || state.filter_status == 'All' || state.filter_status == c.media_status)
     ));
   }
 
-  sortFilterCharacters(state, characters) {
+  prepareView(state, characters) {
+    let copy = [];
+    if (state.fold_roles) {
+      copy = characters.slice();
+    } else {
+      // flatten
+      characters.forEach(c => {
+        c.media.forEach(m => {
+          const char_copy = { ...c, ...m };
+          delete char_copy.media;
+          copy.push(char_copy);
+        });
+      });
+    } 
+
     const order_int = (state.sort_order === 'asc') ? 1 : -1;
-    const copy = characters.slice();
-    copy.sort((a, b) => {
-      let a_key = a[state.sort_key];
-      let b_key = b[state.sort_key];
-      if (a_key < b_key) {
-        return -order_int;
-      }
-      if (a_key > b_key) {
-        return +order_int;
-      }
-      return 0;
-    });
+    sortByKey(copy, state.sort_key, order_int);
     return this.filter(state, copy);
   }
 
   changeView(new_state) {
     let state = {
+      fold_roles: this.state.fold_roles,
       sort_key: this.state.sort_key,
       sort_order: this.state.sort_order,
       filter_char_type: this.state.filter_char_type,
       filter_status: this.state.filter_status,
       ...new_state
     }
-    let characters_view = this.sortFilterCharacters(state, this.characters);
+    let characters_view = this.prepareView(state, this.characters);
     this.setState({
       characters_view,
       ...new_state
@@ -554,6 +549,31 @@ class UnstyledSeiyuu extends React.Component {
 
   render() {
     const classes = this.props.classes;
+
+    const Controls = () => (
+      <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alginItems: 'center' }}>
+        <FormControlLabel
+          control={<Switch size="small" />}
+          onChange={e => this.changeView({ 'fold_roles': e.target.checked })}
+          checked={this.state.fold_roles}
+          label={<Typography variant="caption" component="span">Fold duplicate characters into one</Typography>}
+        />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
+          <Typography variant="caption" component="span">Filter by: </Typography>
+          <DropDownMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
+          <DropDownMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <Typography variant="caption" component="span">Sort by: </Typography>
+          <DropDownMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
+          <DropDownMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
+        </div>
+      </div>
+      </>
+    );
     const PageGrid = () => <Grid container spacing={2}>
       <Grid item xs sm={3}>
         <Paper className={classes.descPaper}>
@@ -567,19 +587,10 @@ class UnstyledSeiyuu extends React.Component {
       </Grid>
       <Grid item xs sm={9}>
         <Paper className={classes.listPaper}>
-          <Grid container>
-            <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-begin', alignItems: 'center' }}>
-              <Typography variant="body2" component="span">Filter by: </Typography>
-              <DropDownMenu onChange={f => this.changeView({'filter_char_type': f})} selectedKey={this.state.filter_char_type} keys={filterCharacterType} />
-              <DropDownMenu onChange={f => this.changeView({'filter_status': f})} selectedKey={this.state.filter_status} keys={mediaStatus} />
-            </Grid>
-            <Grid item xs sm={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              <Typography variant="body2" component="span">Sort by: </Typography>
-              <DropDownMenu onChange={key => this.changeView({'sort_key': key})} selectedKey={this.state.sort_key} keys={sortKeys} />
-              <DropDownMenu onChange={order => this.changeView({'sort_order': order})} selectedKey={this.state.sort_order} keys={sortOrders} />
-            </Grid>
-          </Grid>
-          <div className={classes.listContainer}><CharacterList data={this.state.characters_view} /></div>
+          <Controls />
+          <div className={classes.listContainer}>
+            <CharacterList characters={this.state.characters_view} fold={this.state.fold_roles} />
+          </div>
         </Paper>
       </Grid>
     </Grid>;
