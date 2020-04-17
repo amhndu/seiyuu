@@ -1,6 +1,6 @@
 import React from "react";
 import { Grid, Paper, Typography, Icon, ListItem, CircularProgress,
-  Button, useMediaQuery, Switch, FormControlLabel, Popover }
+  Button, useMediaQuery, Switch, FormControlLabel, Popover, IconButton }
   from "@material-ui/core";
 import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown';
@@ -114,7 +114,12 @@ const styles = theme => ({
     overflowY: 'hidden',
   },
   descriptionExpanded: {
-  }
+  },
+  popover: {
+    [theme.breakpoints.up('sm')]: {
+      minWidth: '600px',
+    }
+  },
 });
 
 const capitalizeWord = (word) => {
@@ -295,7 +300,7 @@ class UnstyledCharacterItem extends React.PureComponent {
               <ElidedText maxLength={80}>{role.media[0].media_title}</ElidedText>
             </a>
           </Typography>
-          {role.media.length - 1} more titles
+          <Typography variant="button">Open {role.media.length - 1} more title{role.media.length > 2 && 's'}</Typography>
         </Grid>
         <Grid item xs={2} className={classes.item}>
           <img src={role.media[0].media_image} alt="media" className={classes.itemImage}/>
@@ -334,9 +339,11 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 
 const CharacterList = (props) => {
   const theme = useTheme();
+  const classes = makeStyles(styles)();
   const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [popoverIndex, setPopoverIndex] = React.useState(0);
+
   const openPopover = (anchor, index) => {
     setAnchorEl(anchor);
     setPopoverIndex(index);
@@ -344,10 +351,14 @@ const CharacterList = (props) => {
 
   const PopoverContent = ({character}) => {
     const subList = flattenCharacter(character);
-
     return (
       <>
-        {subList.map((c, i) => <CharacterItem index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
+        <div style={{ textAlign: 'right' }}>
+          <IconButton aria-label="close" onClick={() => setAnchorEl(null)}><Icon>close</Icon></IconButton>
+        </div>
+        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
+          {subList.map((c, i) => <CharacterItem index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
+        </div>
       </>
     );
   };
@@ -368,6 +379,7 @@ const CharacterList = (props) => {
         )}
       </AutoSizer>
       <Popover
+        classes={{paper: classes.popover}}
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
@@ -379,7 +391,6 @@ const CharacterList = (props) => {
           vertical: 'center',
           horizontal: 'center',
         }}
-        style={{minWidth: '600px'}}
       >
         <PopoverContent character={props.characters[popoverIndex]} />
       </Popover>
