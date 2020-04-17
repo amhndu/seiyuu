@@ -362,7 +362,7 @@ const CharacterList = (props) => {
         <div style={{ textAlign: 'right' }}>
           <IconButton aria-label="close" onClick={() => setAnchorEl(null)}><Icon>close</Icon></IconButton>
         </div>
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
+        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
           {subList.map((c, i) => <CharacterItem key={i} index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
         </div>
       </>
@@ -458,8 +458,7 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   async fetchList(page) {
-    // FIXME
-    const response = await cachedFetch(ANILIST_BASE_URL, {
+    const response = await fetch(ANILIST_BASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -523,8 +522,7 @@ class UnstyledSeiyuu extends React.Component {
   }
 
   async fetchStaff() {
-    // FIXME
-    const response = await cachedFetch(ANILIST_BASE_URL , {
+    const response = await fetch(ANILIST_BASE_URL , {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
