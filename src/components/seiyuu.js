@@ -1,6 +1,6 @@
 import React from "react";
-import { Grid, Paper, Typography, Icon, List, ListItem, CircularProgress,
-  Button, useMediaQuery, Switch, FormControlLabel }
+import { Grid, Paper, Typography, Icon, ListItem, CircularProgress,
+  Button, useMediaQuery, Switch, FormControlLabel, Popover }
   from "@material-ui/core";
 import { withStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown';
@@ -173,6 +173,12 @@ const sortByKey = (arr, sort_key, order_int = 1) => {
   });
 }
 
+const flattenCharacter = (character) => character.media.map(m => {
+  const char_copy = { ...character, ...m };
+  delete char_copy.media;
+  return char_copy;
+});  
+
 class UnstyledSeiyuuDescription extends React.Component {
   constructor(props) {
     super(props);
@@ -285,7 +291,7 @@ class UnstyledCharacterItem extends React.PureComponent {
       <Grid container item sm={6} justify="flex-end" className={classes.item} style={{textAlign: 'right'}}>
         <Grid item xs={10} className={classes.item}>
           <Typography variant="body1">
-            <a className={classes.link} href={role.media_url} target='_blank'>
+            <a className={classes.link} href={role.media[0].media_url} target='_blank'>
               <ElidedText maxLength={80}>{role.media[0].media_title}</ElidedText>
             </a>
           </Typography>
@@ -298,9 +304,12 @@ class UnstyledCharacterItem extends React.PureComponent {
     );
 
     let Anime = null;
+    const buttonProps = {};
     if (fold) {
       if (role.media.length > 1) {
         Anime = AnimeFolded;
+        buttonProps.button = true;
+        buttonProps.onClick = (event) => data.openPopover(event.currentTarget, index);
       } else {
         Anime = () => <AnimeFlattened d={role.media[0]} />;
       }
@@ -310,7 +319,7 @@ class UnstyledCharacterItem extends React.PureComponent {
 
     return (
       <div style={style}>
-        <ListItem divider={index < data.characters.length - 1} className={classes.listItem}>
+        <ListItem divider={index < data.characters.length - 1} className={classes.listItem} {...buttonProps}>
           <Grid container>
             <Character />
             <Anime />
@@ -326,8 +335,25 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 const CharacterList = (props) => {
   const theme = useTheme();
   const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [popoverIndex, setPopoverIndex] = React.useState(0);
+  const openPopover = (anchor, index) => {
+    setAnchorEl(anchor);
+    setPopoverIndex(index);
+  };
 
+  const PopoverContent = ({character}) => {
+    const subList = flattenCharacter(character);
+
+    return (
+      <>
+        {subList.map((c, i) => <CharacterItem index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
+      </>
+    );
+  };
+  
   return (
+    <>
       <AutoSizer>
         {({ height, width }) => (
           <VirtualizedList
@@ -335,12 +361,29 @@ const CharacterList = (props) => {
             itemCount={props.characters.length}
             itemSize={itemSize}
             width={width}
-            itemData={{characters: props.characters, fold: props.fold}}
+            itemData={{characters: props.characters, fold: props.fold, openPopover}}
           >
             {CharacterItem}
           </VirtualizedList>
         )}
       </AutoSizer>
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'center',
+          horizontal: 'center',
+        }}
+        style={{minWidth: '600px'}}
+      >
+        <PopoverContent character={props.characters[popoverIndex]} />
+      </Popover>
+    </>
   );
 };
 
@@ -516,14 +559,7 @@ class UnstyledSeiyuu extends React.Component {
     if (state.fold_roles) {
       copy = characters.slice();
     } else {
-      // flatten
-      characters.forEach(c => {
-        c.media.forEach(m => {
-          const char_copy = { ...c, ...m };
-          delete char_copy.media;
-          copy.push(char_copy);
-        });
-      });
+      copy = [].concat(...characters.map(flattenCharacter));
     } 
 
     const order_int = (state.sort_order === 'asc') ? 1 : -1;
