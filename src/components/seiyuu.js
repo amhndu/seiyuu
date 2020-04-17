@@ -46,10 +46,10 @@ const styles = theme => ({
   },
   listPaper: {
     padding: theme.spacing(1),
-    height: '100%',
+    height: '80vh',
     display: 'flex',
     flexDirection: 'column',
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       height: '100vh',
       display: 'block',
       overflowX: 'hidden',
@@ -57,7 +57,7 @@ const styles = theme => ({
   },
   item: {
     padding: theme.spacing(0.5),
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       padding: '1px',
     }
   },
@@ -86,7 +86,7 @@ const styles = theme => ({
   listItem: {
     height: '120px',
     maxHeight: '120px',
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       height: '240px',
       maxHeight: '240px',
       paddingLeft: '0px',
@@ -95,7 +95,7 @@ const styles = theme => ({
   },
   listContainer: {
     flex: '1 1 auto',
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       height: '100%',
     },
   },
@@ -345,7 +345,7 @@ const CharacterItem = withStyles(styles)(UnstyledCharacterItem);
 const CharacterList = (props) => {
   const theme = useTheme();
   const classes = makeStyles(styles)();
-  const itemSize = useMediaQuery(theme.breakpoints.down('sm')) ? 240 : 120;
+  const itemSize = useMediaQuery(theme.breakpoints.down('xs')) ? 240 : 120;
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [popoverIndex, setPopoverIndex] = React.useState(0);
 
@@ -654,7 +654,7 @@ class UnstyledSeiyuu extends React.Component {
     );
 
     const PageGrid = () => <Grid container spacing={2}>
-      <Grid item xs sm={3}>
+      <Grid item sm={3}>
         <Paper className={classes.descPaper}>
           <SeiyuuDescription
             image={this.state.image}
@@ -664,7 +664,7 @@ class UnstyledSeiyuu extends React.Component {
             description={this.state.description} />
         </Paper>
       </Grid>
-      <Grid item xs sm={9}>
+      <Grid item sm={9}>
         <Paper className={classes.listPaper}>
           <Controls />
           <div className={classes.listContainer}>
