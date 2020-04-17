@@ -266,6 +266,7 @@ class UnstyledSearch extends React.Component {
                 <Typography variant="body1">
                 Search anime voice actors and browse all of their character roles.
                 Unlike the pages from anilist/MAL, <b>{APP_NAME}</b> gives you more information on the anime alongside the character, allowing you to sort the list however you want. Thus you won't get lost reading the super-long lists of popular seiyuus.
+                You can also fold multiple anime titles of the same character into one, making it easier to browse
                 </Typography>
               </Paper>
             </div>

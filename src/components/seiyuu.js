@@ -46,7 +46,8 @@ const styles = theme => ({
   },
   listPaper: {
     padding: theme.spacing(1),
-    height: '80vh',
+    minHeight: '80vh',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     [theme.breakpoints.down('xs')]: {
