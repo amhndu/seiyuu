@@ -63,12 +63,14 @@ export const CHARACTERS_QUERY = `query ($id: Int, $page: Int, $perPage: Int) {
                     title {
                         romaji
                     }
-                    seasonYear
                     coverImage {
                         medium
                     }
                     season
-                    seasonInt
+                    startDate {
+                        year
+                        month
+                    }
                     popularity
                     status
                 }

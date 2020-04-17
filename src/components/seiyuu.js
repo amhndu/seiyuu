@@ -140,21 +140,26 @@ const capitalizeSentence = (sentence) => {
 const toFixedNumber = (n) => Number.parseFloat(n).toFixed(2)
 
 const joinSeason = (season, year) => {
-  if (!season || !year) {
+  if (!season && !year) {
     return 'Unknown';
+  }
+  if (!season) {
+    return year;
   }
 
   return capitalizeWord(season) + ' ' + year;
 }
 
-const yearToSeasonInt = (n, status) => {
-  if (status == 'NOT_YET_RELEASED') {
+const seasonInt = (m) => {
+  if (m.status == 'NOT_YET_RELEASED') {
     return Number.MAX_SAFE_INTEGER;
   }
-  if (!n) {
+
+  if (!m.startDate.year) {
     return 0;
   }
-  return 100 + n % 100;
+
+  return m.startDate.year * 100 + (m.startDate.month || 0);
 }
 
 
@@ -357,7 +362,7 @@ const CharacterList = (props) => {
           <IconButton aria-label="close" onClick={() => setAnchorEl(null)}><Icon>close</Icon></IconButton>
         </div>
         <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
-          {subList.map((c, i) => <CharacterItem index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
+          {subList.map((c, i) => <CharacterItem key={i} index={i} data={{characters: subList, fold: false, openPopover: null}} />)}
         </div>
       </>
     );
@@ -403,7 +408,7 @@ const sortKeys = {
   'favorites': 'Character Favorites',
   'media_title': 'Anime Name',
   'media_score': 'Anime Score',
-  'media_season_int': 'Anime Release Season',
+  'media_season_int': 'Anime Release Date',
   'media_popularity': 'Anime Popularity',
 };
 const sortKeysFolded = {
@@ -440,7 +445,7 @@ class UnstyledSeiyuu extends React.Component {
       characters_view: [],
       is_loading: true,
 
-      fold_roles: true, // FIXME
+      fold_roles: false,
       sort_key: Object.keys(sortKeys)[0],
       sort_order: Object.keys(sortOrders)[0],
       filter_char_type: Object.keys(filterCharacterType)[0],
@@ -477,8 +482,8 @@ class UnstyledSeiyuu extends React.Component {
           return {
             media_score: toFixedNumber((m['averageScore'] || 0) / 10),
             media_title: m['title']['romaji'],
-            media_season: joinSeason(m['season'], m['seasonYear']),
-            media_season_int: m['seasonInt'] || yearToSeasonInt(m['seasonYear'], m['status']),
+            media_season: joinSeason(m['season'], m['startDate']['year']),
+            media_season_int: seasonInt(m),
             media_image: m['coverImage']['medium'],
             media_popularity: m['popularity'] || 0,
             media_url: m['siteUrl'],
