@@ -416,6 +416,14 @@ const sortKeysFolded = {
   'name': 'Character Name',
   'favorites': 'Character Favorites',
 };
+const sortDefaultOrders = {
+  'name': 'asc',
+  'favorites': 'desc',
+  'media_title': 'asc',
+  'media_score': 'desc',
+  'media_season_int': 'desc',
+  'media_popularity': 'desc',
+};
 const sortOrders = {
   'asc': 'Ascending',
   'desc': 'Descending',
@@ -594,6 +602,10 @@ class UnstyledSeiyuu extends React.Component {
 
     if ('fold_roles' in new_state && new_state.fold_roles && !(state.sort_key in sortKeysFolded)) {
       new_state.sort_key = state.sort_key = Object.keys(sortKeysFolded)[0];
+    }
+
+    if ('sort_key' in new_state && !('sort_order' in new_state)) {
+      new_state.sort_order = state.sort_order = sortDefaultOrders[new_state.sort_key];
     }
 
     let characters_view = this.prepareView(state, this.characters);
