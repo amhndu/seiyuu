@@ -197,7 +197,7 @@ class UnstyledSearch extends React.Component {
         done = true;
       }
     }
-    
+
     const new_results = previous_results.concat(this.search_data.splice(0, RESULTS_PER_PAGE));
     this.setState({
       seiyuu_results: new_results,
@@ -206,10 +206,11 @@ class UnstyledSearch extends React.Component {
     });
   }
 
-  handleSubmit() {
+  handleSubmit(event) {
     if (this.state.query_text) {
       this.props.history.push(`/search/${this.state.query_text}`);
     }
+    event.preventDefault();
   }
 
   more() {
@@ -237,7 +238,7 @@ class UnstyledSearch extends React.Component {
           setOpen={open => this.setSnackbar(open)}
         />
         <div>
-          <form onSubmit={() => this.handleSubmit()} className={classes.searchForm}>
+          <form onSubmit={(event) => this.handleSubmit(event)} className={classes.searchForm} action="#">
             <TextField
               variant="outlined"
               fullWidth
